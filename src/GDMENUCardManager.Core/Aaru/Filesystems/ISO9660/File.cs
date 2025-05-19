@@ -39,7 +39,6 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using Aaru.CommonTypes.Enums;
 using Aaru.CommonTypes.Structs;
-using Aaru.Console;
 using Aaru.Helpers;
 using FileAttributes = Aaru.CommonTypes.Structs.FileAttributes;
 

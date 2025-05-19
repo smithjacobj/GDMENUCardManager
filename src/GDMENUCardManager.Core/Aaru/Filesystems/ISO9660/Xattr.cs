@@ -31,10 +31,8 @@
 // In the loving memory of Facunda "Tata" Suárez Domínguez, R.I.P. 2019/07/24
 // ****************************************************************************/
 
-using System;
 using System.Collections.Generic;
 using Aaru.CommonTypes.Structs;
-using Aaru.Helpers;
 
 namespace Aaru.Filesystems
 {

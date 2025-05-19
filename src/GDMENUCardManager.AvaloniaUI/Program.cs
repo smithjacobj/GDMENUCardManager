@@ -1,6 +1,4 @@
 ﻿using Avalonia;
-using Avalonia.Controls.ApplicationLifetimes;
-using Avalonia.Dialogs;
 using System;
 
 namespace GDMENUCardManager

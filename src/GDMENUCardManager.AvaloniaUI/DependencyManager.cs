@@ -1,11 +1,8 @@
 ﻿using Avalonia.Controls;
-using MessageBox.Avalonia;
-using MessageBox.Avalonia.Enums;
-using System;
+using MsBox.Avalonia;
+using MsBox.Avalonia.Enums;
 using System.Collections.Generic;
 using System.IO;
-using System.IO.Compression;
-using System.Linq;
 using System.Threading.Tasks;
 using GDMENUCardManager.Core;
 using GDMENUCardManager.Core.Interface;
@@ -30,7 +27,7 @@ namespace GDMENUCardManager
 
         public async ValueTask<bool> ShowYesNoDialog(string caption, string text)
         {
-            return await MessageBoxManager.GetMessageBoxStandardWindow(caption, text, ButtonEnum.YesNo).ShowDialog(getMainWindow()) == ButtonResult.Yes;
+            return await MessageBoxManager.GetMessageBoxStandard(caption, text, ButtonEnum.YesNo).ShowWindowDialogAsync(getMainWindow()) == ButtonResult.Yes;
         }
 
 

@@ -1,10 +1,8 @@
 ﻿using System;
-using System.Linq;
 using System.Text;
 using DiscUtils.Iso9660;
 using System.Collections.Generic;
 using System.IO;
-using DiscUtils;
 using DiscUtils.Raw;
 
 namespace DiscUtils.Gdrom

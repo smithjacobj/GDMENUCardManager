@@ -11,7 +11,7 @@ using GDMENUCardManager.Core;
 
 namespace GDMENUCardManager
 {
-    public class InfoWindow : Window, INotifyPropertyChanged
+    public partial class InfoWindow : Window, INotifyPropertyChanged
     {
         public string FileInfo { get; }
         public string IpInfo { get; }
@@ -20,20 +20,26 @@ namespace GDMENUCardManager
         public string LabelText
         {
             get { return _LabelText; }
-            private set { _LabelText = value; RaisePropertyChanged(); }
+            private set
+            {
+                _LabelText = value;
+                RaisePropertyChanged();
+            }
         }
 
         private Avalonia.Media.Imaging.Bitmap _GdTexture = null;
         public Avalonia.Media.Imaging.Bitmap GdTexture
         {
             get { return _GdTexture; }
-            private set { _GdTexture = value; RaisePropertyChanged(); }
+            private set
+            {
+                _GdTexture = value;
+                RaisePropertyChanged();
+            }
         }
 
         private GdItem item;
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        public InfoWindow() { }
+        public new event PropertyChangedEventHandler PropertyChanged;
 
         public InfoWindow(GdItem item)
         {
@@ -50,21 +56,33 @@ namespace GDMENUCardManager
             string vga = item.Ip.Vga ? "   VGA" : null;
 
             StringBuilder sb = new StringBuilder();
-            sb.AppendLine("Folder:");
-            sb.AppendLine(Path.GetFileName(item.FullFolderPath));
-            sb.AppendLine();
-            sb.AppendLine("File:");
-            sb.AppendLine(Path.GetFileName(item.ImageFile));
+            if (item.HasError)
+            {
+                sb.AppendLine("Error:");
+                sb.AppendLine(item.ErrorState);
+            }
+            else
+            {
+                sb.AppendLine("Folder:");
+                sb.AppendLine(item.FullFolderPath.FileName);
+                sb.AppendLine();
+                sb.AppendLine("File:");
+                sb.AppendLine(item.ImageFile?.FileName ?? "[Unknown]");
+            }
 
             FileInfo = sb.ToString();
 
-            if (item.FileFormat == FileFormat.Uncompressed)
+            if (item.HasError)
+            {
+                IpInfo = "Error loading disc image";
+            }
+            else if (item.FileFormat == FileFormat.Uncompressed)
             {
                 sb.Clear();
                 sb.AppendLine(item.Ip.Name);
                 sb.AppendLine();
                 sb.AppendLine($"{item.Ip.Version}   DISC {item.Ip.Disc}{vga}");
-                sb.AppendLine($"CRC: {item.Ip.CRC}   Product: {item.Ip.ProductNumber}");
+                sb.AppendLine($"CRC: {item.Ip.Crc}   Product: {item.Ip.ProductNumber}");
 
                 if (item.Ip.SpecialDisc != SpecialDisc.None)
                 {
@@ -78,7 +96,11 @@ namespace GDMENUCardManager
                 IpInfo = "Compressed file";
             }
 
-            this.KeyUp += (ss, ee) => { if (ee.Key == Avalonia.Input.Key.Escape) Close(); };
+            this.KeyUp += (ss, ee) =>
+            {
+                if (ee.Key == Avalonia.Input.Key.Escape)
+                    Close();
+            };
             DataContext = this;
         }
 
@@ -97,12 +119,14 @@ namespace GDMENUCardManager
             await Task.Delay(100);
             try
             {
+                if (item.HasError)
+                    throw new InvalidDataException("Error loading disc image.");
                 if (item.FileFormat == FileFormat.SevenZip)
                     throw new Exception("Can't load from compressed files.");
 
-                var filePath = Path.Combine(item.FullFolderPath, item.ImageFile);
+                var filePath = item.FullFolderPath.Combine(item.ImageFile);
 
-                var gdtexture = await Task.Run(() => ImageHelper.GetGdText(filePath));
+                var gdtexture = await Task.Run(() => ImageHelper.GetGdText(filePath.ToString()));
 
                 if (gdtexture == null)
                 {
@@ -110,15 +134,29 @@ namespace GDMENUCardManager
                 }
                 else
                 {
-                    var decoded = await Task.Run(() => new PuyoTools.PvrTexture().GetDecoded(gdtexture));
+                    var decoded = await Task.Run(
+                        () => new PuyoTools.PvrTexture().GetDecoded(gdtexture)
+                    );
 
                     using (var memory = new MemoryStream())
                     {
                         byte[] data = decoded.Item1;
-                        using (var writeableBitmap = new Avalonia.Media.Imaging.WriteableBitmap(new PixelSize(decoded.Item2, decoded.Item3), new Vector(96, 96), Avalonia.Platform.PixelFormat.Bgra8888, Avalonia.Platform.AlphaFormat.Unpremul))
+                        using (
+                            var writeableBitmap = new Avalonia.Media.Imaging.WriteableBitmap(
+                                new PixelSize(decoded.Item2, decoded.Item3),
+                                new Vector(96, 96),
+                                Avalonia.Platform.PixelFormat.Bgra8888,
+                                Avalonia.Platform.AlphaFormat.Unpremul
+                            )
+                        )
                         {
                             using (var l = writeableBitmap.Lock())
-                                System.Runtime.InteropServices.Marshal.Copy(data, 0, l.Address, data.Length);
+                                System.Runtime.InteropServices.Marshal.Copy(
+                                    data,
+                                    0,
+                                    l.Address,
+                                    data.Length
+                                );
 
                             writeableBitmap.Save(memory);
                             memory.Position = 0;

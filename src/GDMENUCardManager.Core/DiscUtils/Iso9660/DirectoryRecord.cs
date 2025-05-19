@@ -23,7 +23,6 @@
 namespace DiscUtils.Iso9660
 {
     using System;
-    using System.IO;
     using System.Text;
 
     [Flags]

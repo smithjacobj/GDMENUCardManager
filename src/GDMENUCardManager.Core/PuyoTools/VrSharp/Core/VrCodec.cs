@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace VrSharp
+﻿namespace VrSharp
 {
     #region Pixel Codec
     // Base codec for the pixel codecs

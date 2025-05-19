@@ -1,9 +1,12 @@
 ﻿using GDMENUCardManager.Core.Interface;
 using System;
+using System.ComponentModel.DataAnnotations;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace GDMENUCardManager.Core
@@ -21,6 +24,25 @@ namespace GDMENUCardManager.Core
         {
             //skip hidden files on OSX
             return Task.Run(() => Directory.GetFiles(path).Where(x => !Path.GetFileName(x).StartsWith(".")).ToArray());
+        }
+
+        public static async Task<string> GetErrorFileAsync(string folderPath)
+        {
+            if (!await DirectoryExistsAsync(folderPath))
+                return null;
+
+            var files = await GetFilesAsync(folderPath);
+            return FilterErrorFile(files);
+        }
+
+        public static string FilterErrorFile(string[] files)
+        {
+            return files.FirstOrDefault(x => Path.GetFileName(x).Equals(Constants.ErrorTextFile, StringComparison.OrdinalIgnoreCase));
+        }
+
+        public static async Task WriteErrorFileAsync(string folderPath, string errorText)
+        {
+            await WriteTextFileAsync(Path.Combine(folderPath, Constants.ErrorTextFile), errorText);
         }
 
         public static Task MoveDirectoryAsync(string from, string to)
@@ -117,6 +139,29 @@ namespace GDMENUCardManager.Core
             return stringBuilder.ToString().Normalize(NormalizationForm.FormC);
         }
 
-        internal static System.Func<string, bool> CompressedFileExpression;// = new System.Func<string, bool>(x => x.EndsWith(".7z", StringComparison.InvariantCultureIgnoreCase) || x.EndsWith(".rar", StringComparison.InvariantCultureIgnoreCase) || x.EndsWith(".zip", StringComparison.InvariantCultureIgnoreCase));
+        /// <summary>
+        ///     A generic extension method that aids in reflecting 
+        ///     and retrieving any attribute that is applied to an `Enum`.
+        /// </summary>
+        public static TAttribute GetAttribute<TAttribute>(this Enum enumValue)
+                where TAttribute : Attribute
+        {
+            return enumValue.GetType()
+                            .GetMember(enumValue.ToString())
+                            .First()
+                            .GetCustomAttribute<TAttribute>();
+        }
+
+        public static string GetEnumName(this Enum enumValue)
+        {
+            var displayName = enumValue.GetAttribute<DisplayAttribute>()?.Name;
+            return string.IsNullOrEmpty(displayName) ? enumValue.ToString() : displayName;
+        }
+        
+        private static readonly Regex SWhitespace = new(@"\s+");
+        public static string RemoveWhitespace(this string input) 
+        {
+            return SWhitespace.Replace(input, string.Empty);
+        }
     }
 }

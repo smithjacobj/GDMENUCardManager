@@ -1,26 +1,12 @@
-﻿using Avalonia;
-using Avalonia.Controls;
-using Avalonia.Interactivity;
+﻿using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
-using MessageBox.Avalonia;
-using MessageBox.Avalonia.Enums;
-using MessageBox.Avalonia.Models;
-using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using GDMENUCardManager.Core.Interface;
 
 namespace GDMENUCardManager
 {
-    public class ProgressWindow : Window, INotifyPropertyChanged, IProgressWindow
+    public partial class ProgressWindow : Window, INotifyPropertyChanged, IProgressWindow
     {
         private int _TotalItems;
         public int TotalItems
@@ -45,7 +31,7 @@ namespace GDMENUCardManager
             set { _TextContent = value; RaisePropertyChanged(); }
         }
 
-        public event PropertyChangedEventHandler PropertyChanged;
+        public new event PropertyChangedEventHandler PropertyChanged;
 
         public ProgressWindow()
         {

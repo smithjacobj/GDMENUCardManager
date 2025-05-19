@@ -32,14 +32,12 @@
 // ****************************************************************************/
 
 using System;
-using System.Collections.Generic;
 using System.Text;
-using Aaru.Checksums;
 using Aaru.CommonTypes;
 using Aaru.CommonTypes.Interfaces;
 using Aaru.Console;
 //using Aaru.Decoders.Sega;
-using Aaru.Helpers;
+
 //using Schemas;
 
 namespace Aaru.Filesystems

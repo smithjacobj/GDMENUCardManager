@@ -1,114 +1,371 @@
-﻿using System.ComponentModel;
+﻿#nullable enable
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using System.Text.Json.Serialization;
 using ByteSizeLib;
+using NiceIO;
 
 namespace GDMENUCardManager.Core
 {
+    /// <summary>
+    /// Potential location categories for where the entry is currently stored/active.
+    /// </summary>
+    public enum LocationEnum
+    {
+        [Display(Name = "Unset")] Unset = 0,
 
+        [Display(Name = "Error")] Error,
+
+        [Display(Name = "Other")] Other,
+
+        [Display(Name = "SD Card")] SdCard
+    }
+
+    /// <summary>
+    /// An item representing an individual game entry in the manager.
+    /// </summary>
     public sealed class GdItem : INotifyPropertyChanged
     {
-        public static int namemaxlen = 39;
-        public static int serialmaxlen = 10;
+        public static int Namemaxlen = 39;
+        public static int Serialmaxlen = 10;
 
-        public string Guid { get; set; }
+        /// <summary>
+        /// A GUID used to ID the entry when relocating games (e.g. sorting)
+        /// </summary>
+        private string? _guid;
 
-        private ByteSize _Length;
+        public string Guid
+        {
+            get
+            {
+                if (!string.IsNullOrEmpty(_guid)) return _guid;
+
+                _guid = System.Guid.NewGuid().ToString();
+                OnPropertyChanged();
+
+                return _guid;
+            }
+            init
+            {
+                _guid = value;
+                OnPropertyChanged();
+            }
+        }
+
+        /// <summary>
+        /// The size of the game on the card
+        /// </summary>
+        private ByteSize _length;
+
+        [JsonConverter(typeof(ByteSizeConverter))]
         public ByteSize Length
         {
-            get { return _Length; }
-            set { _Length = value; RaisePropertyChanged(); }
-        }
-
-        //public long CdiTarget { get; set; }
-
-        private string _Name;
-        public string Name
-        {
-            get { return _Name; }
+            get => _length;
             set
             {
-                _Name = value;
-                if (_Name != null)
-                {
-                    if (_Name.Length > namemaxlen)
-                        _Name = _Name.Substring(0, namemaxlen);
-                    _Name = Helper.RemoveDiacritics(_Name).Replace("_", " ").Trim();
-                }
-
-                RaisePropertyChanged();
-            }
-        }
-        
-        private string _ProductNumber;
-        public string ProductNumber
-        {
-            get { return _ProductNumber; }
-            set
-            {
-                _ProductNumber = value;
-                if (_ProductNumber != null)
-                {
-                    if (_ProductNumber.Length > serialmaxlen)
-                        _ProductNumber = _ProductNumber.Substring(0, serialmaxlen);
-                    //todo check if this is needed
-                    //_ProductNumber = Helper.RemoveDiacritics(_ProductNumber).Replace("_", " ").Trim();
-                }
-
-                RaisePropertyChanged();
+                _length = value;
+                OnPropertyChanged();
             }
         }
 
-        //private string _ImageFile;
-        public string ImageFile
+        /// <summary>
+        /// The title/name of the game entry
+        /// </summary>
+        private string? _name;
+
+        public string? Name
         {
-            get { return ImageFiles.FirstOrDefault(); }
-            //set { _ImageFile = value; RaisePropertyChanged(); }
+            get => _name;
+            set
+            {
+                _name = value;
+                if (_name != null)
+                {
+                    if (_name.Length > Namemaxlen)
+                        _name = _name[..Namemaxlen];
+                    _name = Helper.RemoveDiacritics(_name).Replace("_", " ").Trim();
+                }
+
+                OnPropertyChanged();
+            }
         }
 
-        public readonly System.Collections.Generic.List<string> ImageFiles = new System.Collections.Generic.List<string>();
+        /// <summary>
+        /// The serial/product number assigned to the game
+        /// </summary>
+        private string? _productNumber;
 
-        private string _FullFolderPath;
-        public string FullFolderPath
+        public string? ProductNumber
         {
-            get { return _FullFolderPath; }
-            set { _FullFolderPath = value; RaisePropertyChanged(); }
+            get => _productNumber ??= Ip?.ProductNumber?[..Serialmaxlen];
+            set
+            {
+                _productNumber = value;
+                if (_productNumber != null)
+                {
+                    if (_productNumber.Length > Serialmaxlen)
+                        _productNumber = _productNumber[..Serialmaxlen];
+                }
+
+                OnPropertyChanged();
+            }
         }
 
-        private IpBin _Ip;
-        public IpBin Ip
+        /// <summary>
+        /// The main image file for the game entry
+        /// </summary>
+        [JsonIgnore]
+        public NPath? ImageFile => ImageFiles.FirstOrDefault();
+
+        /// <summary>
+        /// The full list of image files in the entry
+        /// </summary>
+        [JsonConverter(typeof(NPathEnumerableConverter))]
+        public readonly List<NPath> ImageFiles = new();
+
+        /// <summary>
+        /// The folder that contains the entry, whether on the SD card or elsewhere.
+        /// </summary>
+        private NPath? _fullFolderPath;
+
+        [JsonConverter(typeof(NPathConverter))]
+        public NPath FullFolderPath
         {
-            get { return _Ip; }
-            set { _Ip = value; RaisePropertyChanged(); }
+            get
+            {
+                if (_fullFolderPath == null)
+                    throw new InvalidDataException("Attempt to access uninitialized FullFolderPath");
+                return _fullFolderPath;
+            }
+            set
+            {
+                _fullFolderPath = value;
+                OnPropertyChanged();
+            }
         }
 
-        private int _SdNumber;
+        /// <summary>
+        /// The archive or image file's original location.
+        /// </summary>
+        private NPath? _sourcePath;
+
+        [JsonConverter(typeof(NPathConverter))]
+        public NPath? SourcePath
+        {
+            get => _sourcePath;
+            set
+            {
+                _sourcePath = value;
+                OnPropertyChanged();
+            }
+        }
+
+        /// <summary>
+        /// @todo: fill this out
+        /// </summary>
+        private IpBin? _ip;
+
+        public IpBin? Ip
+        {
+            get => _ip;
+            set
+            {
+                _ip = value;
+                if (_ip != null)
+                    _ip.PropertyChanged += (_, _) => { OnPropertyChanged(nameof(ProductNumber)); };
+                OnPropertyChanged();
+            }
+        }
+
+        /// <summary>
+        /// The SD card index/folder number for the entry
+        /// </summary>
+        private int _sdNumber;
+
         public int SdNumber
         {
-            get { return _SdNumber; }
-            set { _SdNumber = value; RaisePropertyChanged(); RaisePropertyChanged(nameof(Location)); }
+            get => IsMenuItem ? 1 : _sdNumber;
+            set
+            {
+                if (IsMenuItem)
+                {
+                    return;
+                }
+
+                _sdNumber = value;
+                OnPropertyChanged();
+            }
         }
 
-        private WorkMode _Work;
+        /// <summary>
+        /// Current action that is being taken on this entry
+        /// </summary>
+        private WorkMode _work;
+
+        [JsonIgnore]
         public WorkMode Work
         {
-            get { return _Work; }
-            set { _Work = value; RaisePropertyChanged(); }
+            get => _work;
+            set
+            {
+                _work = value;
+                OnPropertyChanged();
+            }
         }
 
-        public string Location
+        /// <summary>
+        /// The location as enumerated in LocationEnum that the files for the entry are in.
+        /// </summary>
+        private LocationEnum _location = LocationEnum.Unset;
+
+        public LocationEnum Location
         {
-            get { return SdNumber == 0 ? "Other" : "SD Card"; }
+            get => HasError ? LocationEnum.Error : _location;
+            set
+            {
+                _location = value;
+                OnPropertyChanged();
+            }
         }
 
-        public bool CanApplyGDIShrink { get; set; }
+        /// <summary>
+        /// Whether or not the game can be shrunk by GDIShrink.
+        /// </summary>
+        public bool CanApplyGdiShrink { get; set; }
 
-        private FileFormat _FileFormat;
+        /// <summary>
+        /// The condition/format the file is stored in.
+        /// </summary>
+        private FileFormat _fileFormat;
+
         public FileFormat FileFormat
         {
-            get { return _FileFormat; }
-            set { _FileFormat = value; RaisePropertyChanged(); }
+            get => _fileFormat;
+            set
+            {
+                _fileFormat = value;
+                OnPropertyChanged();
+            }
+        }
+
+        /// <summary>
+        /// A recorded error in case work on the entry (decompression, reading the image, etc.) failed.
+        /// </summary>
+        private string? _errorState;
+
+        public string? ErrorState
+        {
+            get => _errorState;
+            set
+            {
+                _errorState = value;
+                OnPropertyChanged();
+            }
+        }
+
+        [JsonIgnore] public bool HasError => !string.IsNullOrEmpty(ErrorState);
+
+        [JsonIgnore] public bool IsMenuItem => EnumHelpers.GetMenuKindFromName(Name) != MenuKind.None;
+
+        public bool ImportComparator(GdItem other)
+        {
+            return FullFolderPath == other.FullFolderPath
+                   && new HashSet<NPath>(ImageFiles).SetEquals(other.ImageFiles);
+        }
+
+        public class ImportComparer : IEqualityComparer<GdItem>
+        {
+            public bool Equals(GdItem? x, GdItem? y)
+            {
+                var xDisc = string.IsNullOrEmpty(x?.Ip?.Disc) ? Constants.k_UnknownDiscNumber : x.Ip?.Disc;
+                var yDisc = string.IsNullOrEmpty(y?.Ip?.Disc) ? Constants.k_UnknownDiscNumber : y.Ip?.Disc;
+                return !string.IsNullOrEmpty(x?.ProductNumber)
+                       && !string.IsNullOrEmpty(y?.ProductNumber)
+                       && x.ProductNumber == y.ProductNumber
+                       && xDisc != Constants.k_UnknownDiscNumber
+                       && yDisc != Constants.k_UnknownDiscNumber
+                       && x.Ip != null
+                       && y.Ip != null
+                       && x.Ip.Disc == y.Ip.Disc;
+            }
+
+            public int GetHashCode(GdItem obj)
+            {
+                return obj.ProductNumber?.GetHashCode() ?? 0;
+            }
+        }
+
+        internal class NPathConverter : JsonConverter<NPath>
+        {
+            public override NPath? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+            {
+                var strPath = reader.GetString();
+                return string.IsNullOrEmpty(strPath) ? null : new NPath(strPath);
+            }
+
+            public override void Write(Utf8JsonWriter writer, NPath value, JsonSerializerOptions options)
+            {
+                writer.WriteStringValue(value.ToString());
+            }
+        }
+
+        internal class NPathEnumerableConverter : JsonConverter<IEnumerable<NPath>>
+        {
+            public override IEnumerable<NPath>? Read(ref Utf8JsonReader reader, Type typeToConvert,
+                JsonSerializerOptions options)
+            {
+                var jsonNode = JsonNode.Parse(ref reader);
+                if (jsonNode == null) return null;
+
+                var paths = new List<NPath>();
+                return jsonNode.AsArray().Where(x => x != null).Select(x => new NPath(x!.GetValue<string>()));
+            }
+
+            public override void Write(Utf8JsonWriter writer, IEnumerable<NPath> value, JsonSerializerOptions options)
+            {
+                var jsonArray = new JsonArray();
+                foreach (var path in value)
+                {
+                    jsonArray.Add(path.ToString());
+                }
+                jsonArray.WriteTo(writer);
+            }
+        }
+
+        internal class ByteSizeConverter : JsonConverter<ByteSize>
+        {
+            public override ByteSize Read(
+                ref Utf8JsonReader reader,
+                Type typeToConvert,
+                JsonSerializerOptions options
+            )
+            {
+                var jsonNode = JsonNode.Parse(ref reader);
+                if (jsonNode == null) return ByteSize.FromBytes(0);
+
+                var bytes = jsonNode["Bytes"]?.GetValue<double>() ?? 0;
+                return ByteSize.FromBytes(bytes);
+            }
+
+            public override void Write(
+                Utf8JsonWriter writer,
+                ByteSize value,
+                JsonSerializerOptions options
+            )
+            {
+                var jsonObject = new JsonObject
+                {
+                    ["Bytes"] = value.Bytes
+                };
+                jsonObject.WriteTo(writer);
+            }
         }
 
 #if DEBUG
@@ -118,11 +375,18 @@ namespace GDMENUCardManager.Core
         }
 #endif
 
-        public event PropertyChangedEventHandler PropertyChanged;
+        public event PropertyChangedEventHandler? PropertyChanged;
 
-        private void RaisePropertyChanged([CallerMemberName] string propertyName = "")
+        private void OnPropertyChanged([CallerMemberName] string propertyName = "")
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        public void UpdateLength()
+        {
+            Length = ByteSize.FromBytes(
+                ImageFiles.Sum(x => new FileInfo(FullFolderPath.Combine(x).ToString()).Length)
+            );
         }
     }
 }
