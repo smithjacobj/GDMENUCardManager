@@ -22,22 +22,27 @@ namespace GDMENUCardManager
     public partial class MainWindow : Window, IDropTarget, INotifyPropertyChanged
     {
         private Core.Manager _ManagerInstance;
-        public Core.Manager Manager { get { return _ManagerInstance; } }
+        public Core.Manager Manager
+        {
+            get { return _ManagerInstance; }
+        }
 
         private readonly bool showAllDrives = false;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public ObservableCollection<DriveInfo> DriveList { get; } = new ObservableCollection<DriveInfo>();
-
-
-
+        public ObservableCollection<DriveInfo> DriveList { get; } =
+            new ObservableCollection<DriveInfo>();
 
         private bool _IsBusy;
         public bool IsBusy
         {
             get { return _IsBusy; }
-            set { _IsBusy = value; RaisePropertyChanged(); }
+            set
+            {
+                _IsBusy = value;
+                RaisePropertyChanged();
+            }
         }
 
         private DriveInfo _DriveInfo;
@@ -58,55 +63,87 @@ namespace GDMENUCardManager
         public string TempFolder
         {
             get { return _TempFolder; }
-            set { _TempFolder = value; RaisePropertyChanged(); }
+            set
+            {
+                _TempFolder = value;
+                RaisePropertyChanged();
+            }
         }
 
         private string _TotalFilesLength;
         public string TotalFilesLength
         {
             get { return _TotalFilesLength; }
-            private set { _TotalFilesLength = value; RaisePropertyChanged(); }
+            private set
+            {
+                _TotalFilesLength = value;
+                RaisePropertyChanged();
+            }
         }
 
         private bool _HaveGDIShrinkBlacklist;
         public bool HaveGDIShrinkBlacklist
         {
             get { return _HaveGDIShrinkBlacklist; }
-            set { _HaveGDIShrinkBlacklist = value; RaisePropertyChanged(); }
+            set
+            {
+                _HaveGDIShrinkBlacklist = value;
+                RaisePropertyChanged();
+            }
         }
 
         //private bool _EnableGDIShrink;
         public bool EnableGDIShrink
         {
             get { return Manager.EnableGDIShrink; }
-            set { Manager.EnableGDIShrink = value; RaisePropertyChanged(); }
+            set
+            {
+                Manager.EnableGDIShrink = value;
+                RaisePropertyChanged();
+            }
         }
 
         //private bool _EnableGDIShrinkCompressed;
         public bool EnableGDIShrinkCompressed
         {
             get { return Manager.EnableGDIShrinkCompressed; }
-            set { Manager.EnableGDIShrinkCompressed = value; RaisePropertyChanged(); }
+            set
+            {
+                Manager.EnableGDIShrinkCompressed = value;
+                RaisePropertyChanged();
+            }
         }
 
         //private bool _EnableGDIShrinkBlackList = true;
         public bool EnableGDIShrinkBlackList
         {
             get { return Manager.EnableGDIShrinkBlackList; }
-            set { Manager.EnableGDIShrinkBlackList = value; RaisePropertyChanged(); }
+            set
+            {
+                Manager.EnableGDIShrinkBlackList = value;
+                RaisePropertyChanged();
+            }
         }
 
         public MenuKind MenuKindSelected
         {
             get { return Manager.MenuKindSelected; }
-            set { Manager.MenuKindSelected = value; RaisePropertyChanged(); }
+            set
+            {
+                Manager.MenuKindSelected = value;
+                RaisePropertyChanged();
+            }
         }
 
         private string _Filter;
         public string Filter
         {
             get { return _Filter; }
-            set { _Filter = value; RaisePropertyChanged(); }
+            set
+            {
+                _Filter = value;
+                RaisePropertyChanged();
+            }
         }
 
         private readonly string fileFilterList;
@@ -116,9 +153,16 @@ namespace GDMENUCardManager
             InitializeComponent();
 
             var compressedFileFormats = new string[] { ".7z", ".rar", ".zip" };
-            _ManagerInstance = Core.Manager.CreateInstance(new DependencyManager(), compressedFileFormats);
-            var fullList = Manager.supportedImageFormats.Concat(compressedFileFormats).Select(x => $"*{x}").ToArray();
-            fileFilterList = $"Dreamcast Game ({string.Join("; ", fullList)})|{string.Join(';', fullList)}";
+            _ManagerInstance = Core.Manager.CreateInstance(
+                new DependencyManager(),
+                compressedFileFormats
+            );
+            var fullList = Manager.supportedImageFormats
+                .Concat(compressedFileFormats)
+                .Select(x => $"*{x}")
+                .ToArray();
+            fileFilterList =
+                $"Dreamcast Game ({string.Join("; ", fullList)})|{string.Join(';', fullList)}";
 
             this.Loaded += (ss, ee) =>
             {
@@ -129,16 +173,28 @@ namespace GDMENUCardManager
             this.PropertyChanged += MainWindow_PropertyChanged;
             Manager.ItemList.CollectionChanged += ItemList_CollectionChanged;
 
-            SevenZip.SevenZipExtractor.SetLibraryPath(Environment.Is64BitProcess ? "7z64.dll" : "7z.dll");
+            SevenZip.SevenZipExtractor.SetLibraryPath(
+                Environment.Is64BitProcess ? "7z64.dll" : "7z.dll"
+            );
 
             //config parsing. all settings are optional and must reverse to default values if missing
             bool.TryParse(ConfigurationManager.AppSettings["ShowAllDrives"], out showAllDrives);
             bool.TryParse(ConfigurationManager.AppSettings["Debug"], out Manager.debugEnabled);
-            if (bool.TryParse(ConfigurationManager.AppSettings["UseBinaryString"], out bool useBinaryString))
+            if (
+                bool.TryParse(
+                    ConfigurationManager.AppSettings["UseBinaryString"],
+                    out bool useBinaryString
+                )
+            )
                 Converter.ByteSizeToStringConverter.UseBinaryString = useBinaryString;
             if (int.TryParse(ConfigurationManager.AppSettings["CharLimit"], out int charLimit))
                 GdItem.namemaxlen = Math.Min(255, Math.Max(charLimit, 1));
-            if (bool.TryParse(ConfigurationManager.AppSettings["TruncateMenuGDI"], out bool truncateMenuGDI))
+            if (
+                bool.TryParse(
+                    ConfigurationManager.AppSettings["TruncateMenuGDI"],
+                    out bool truncateMenuGDI
+                )
+            )
                 Manager.TruncateMenuGDI = truncateMenuGDI;
 
             TempFolder = Path.GetTempPath();
@@ -155,7 +211,10 @@ namespace GDMENUCardManager
                 await LoadItemsFromCard();
         }
 
-        private void ItemList_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        private void ItemList_CollectionChanged(
+            object sender,
+            System.Collections.Specialized.NotifyCollectionChangedEventArgs e
+        )
         {
             updateTotalSize();
         }
@@ -165,7 +224,7 @@ namespace GDMENUCardManager
             if (IsBusy)
                 e.Cancel = true;
             else
-                Manager.ItemList.CollectionChanged -= ItemList_CollectionChanged;//release events
+                Manager.ItemList.CollectionChanged -= ItemList_CollectionChanged; //release events
         }
 
         private void RaisePropertyChanged([CallerMemberName] string propertyName = "")
@@ -176,9 +235,10 @@ namespace GDMENUCardManager
         private void updateTotalSize()
         {
             var bsize = ByteSizeLib.ByteSize.FromBytes(Manager.ItemList.Sum(x => x.Length.Bytes));
-            TotalFilesLength = Converter.ByteSizeToStringConverter.UseBinaryString ? bsize.ToBinaryString() : bsize.ToString();
+            TotalFilesLength = Converter.ByteSizeToStringConverter.UseBinaryString
+                ? bsize.ToBinaryString()
+                : bsize.ToString();
         }
-
 
         private async Task LoadItemsFromCard()
         {
@@ -186,11 +246,19 @@ namespace GDMENUCardManager
 
             try
             {
+                // @note: this is probably the place to set up ignoring errors
+                // also we can opt to put an error icon next to bad entries or something instead of
+                // blocking hard.
                 await Manager.LoadItemsFromCard();
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Problem loading the following folder(s):\n\n{ex.Message}", "Invalid Folders", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show(
+                    $"Problem loading the following folder(s):\n\n{ex.Message}",
+                    "Invalid Folders",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning
+                );
             }
             finally
             {
@@ -205,11 +273,23 @@ namespace GDMENUCardManager
             try
             {
                 if (await Manager.Save(TempFolder))
-                    MessageBox.Show(this, "Done!", "Message", MessageBoxButton.OK, MessageBoxImage.Information);
+                    MessageBox.Show(
+                        this,
+                        "Done!",
+                        "Message",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Information
+                    );
             }
             catch (Exception ex)
             {
-                MessageBox.Show(this, ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show(
+                    this,
+                    ex.Message,
+                    "Error",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error
+                );
             }
             finally
             {
@@ -217,7 +297,6 @@ namespace GDMENUCardManager
                 updateTotalSize();
             }
         }
-
 
         void IDropTarget.DragOver(IDropInfo dropInfo)
         {
@@ -253,8 +332,6 @@ namespace GDMENUCardManager
             }
         }
 
-        
-
         private async void ButtonSaveChanges_Click(object sender, RoutedEventArgs e)
         {
             await Save();
@@ -273,7 +350,10 @@ namespace GDMENUCardManager
 
             using (var dialog = new System.Windows.Forms.FolderBrowserDialog())
             {
-                if ((string)btn.CommandParameter == nameof(TempFolder) && !string.IsNullOrEmpty(TempFolder))
+                if (
+                    (string)btn.CommandParameter == nameof(TempFolder)
+                    && !string.IsNullOrEmpty(TempFolder)
+                )
                     dialog.SelectedPath = TempFolder;
 
                 if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
@@ -307,11 +387,16 @@ namespace GDMENUCardManager
                 if (item.Ip == null)
                     await Manager.LoadIP(item);
 
-                new InfoWindow(item) { Owner = this}.ShowDialog();
+                new InfoWindow(item) { Owner = this }.ShowDialog();
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
-                MessageBox.Show(ex.Message, "Error Loading data", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show(
+                    ex.Message,
+                    "Error Loading data",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error
+                );
             }
             IsBusy = false;
         }
@@ -325,7 +410,12 @@ namespace GDMENUCardManager
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message, "Error Loading data", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show(
+                    ex.Message,
+                    "Error Loading data",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error
+                );
             }
             IsBusy = false;
         }
@@ -344,9 +434,19 @@ namespace GDMENUCardManager
                 if (!w.ShowDialog().GetValueOrDefault())
                     return;
 
-                var count = await Manager.BatchRenameItems(w.NotOnCard, w.OnCard, w.FolderName, w.ParseTosec);
+                var count = await Manager.BatchRenameItems(
+                    w.NotOnCard,
+                    w.OnCard,
+                    w.FolderName,
+                    w.ParseTosec
+                );
 
-                MessageBox.Show($"{count} item(s) renamed", "Done", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show(
+                    $"{count} item(s) renamed",
+                    "Done",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information
+                );
             }
             catch (Exception ex)
             {
@@ -386,7 +486,20 @@ namespace GDMENUCardManager
 
         private void FillDriveList(bool isRefreshing = false)
         {
-            var list = DriveInfo.GetDrives().Where(x => x.IsReady && (showAllDrives || (x.DriveType == DriveType.Removable && x.DriveFormat.StartsWith("FAT")))).ToArray();
+            var list = DriveInfo
+                .GetDrives()
+                .Where(
+                    x =>
+                        x.IsReady
+                        && (
+                            showAllDrives
+                            || (
+                                x.DriveType == DriveType.Removable
+                                && x.DriveFormat.StartsWith("FAT")
+                            )
+                        )
+                )
+                .ToArray();
 
             if (isRefreshing)
             {
@@ -400,7 +513,12 @@ namespace GDMENUCardManager
             {
                 DriveList.Add(drive);
                 //look for GDEMU.ini file
-                if (SelectedDrive == null && File.Exists(Path.Combine(drive.RootDirectory.FullName, Constants.MenuConfigTextFile)))
+                if (
+                    SelectedDrive == null
+                    && File.Exists(
+                        Path.Combine(drive.RootDirectory.FullName, Constants.MenuConfigTextFile)
+                    )
+                )
                     SelectedDrive = drive;
             }
 
@@ -414,7 +532,6 @@ namespace GDMENUCardManager
                         break;
                     }
             }
-
 
             if (!DriveList.Any())
                 return;
@@ -431,14 +548,14 @@ namespace GDMENUCardManager
 
         private void MenuItemRenameSentence_Click(object sender, RoutedEventArgs e)
         {
-            TextInfo textInfo = new CultureInfo("en-US",false).TextInfo;
+            TextInfo textInfo = new CultureInfo("en-US", false).TextInfo;
 
             dg1.CurrentCell = new DataGridCellInfo(dg1.SelectedItem, dg1.Columns[4]);
             IEnumerable<GdItem> items = dg1.SelectedItems.Cast<GdItem>();
 
             foreach (var item in items)
             {
-                item.Name = textInfo.ToTitleCase( textInfo.ToLower( item.Name) );
+                item.Name = textInfo.ToTitleCase(textInfo.ToLower(item.Name));
             }
         }
 
@@ -446,10 +563,12 @@ namespace GDMENUCardManager
         {
             await renameSelection(RenameBy.Ip);
         }
+
         private async void MenuItemRenameFolder_Click(object sender, RoutedEventArgs e)
         {
             await renameSelection(RenameBy.Folder);
         }
+
         private async void MenuItemRenameFile_Click(object sender, RoutedEventArgs e)
         {
             await renameSelection(RenameBy.File);
@@ -490,7 +609,7 @@ namespace GDMENUCardManager
                             await Manager.LoadIP(item);
                             IsBusy = false;
                         }
-                        if (item.Ip.Name != "GDMENU" && item.Ip.Name != "openMenu")//dont let the user exclude GDMENU
+                        if (item.Ip.Name != "GDMENU" && item.Ip.Name != "openMenu") //dont let the user exclude GDMENU
                             toRemove.Add(item);
                     }
                     else
@@ -521,7 +640,10 @@ namespace GDMENUCardManager
 
                     if (invalid.Any())
                     {
-                        var w = new TextWindow("Ignored folders/files", string.Join(Environment.NewLine, invalid));
+                        var w = new TextWindow(
+                            "Ignored folders/files",
+                            string.Join(Environment.NewLine, invalid)
+                        );
                         w.Owner = this;
                         w.ShowDialog();
                     }
@@ -547,10 +669,7 @@ namespace GDMENUCardManager
                 await Manager.LoadIpAll();
                 IsBusy = false;
             }
-            catch (ProgressWindowClosedException)
-            {
-
-            }
+            catch (ProgressWindowClosedException) { }
 
             if (dg1.SelectedIndex == -1 || !searchInGrid(dg1.SelectedIndex))
                 searchInGrid(0);
@@ -570,6 +689,5 @@ namespace GDMENUCardManager
             }
             return false;
         }
-
     }
 }

@@ -16,25 +16,38 @@ using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using GDMENUCardManager.Core;
 using System.Configuration;
+using JetBrains.Annotations;
+using Avalonia.Data.Converters;
+using Avalonia;
+using System.Reactive.Linq;
+using AvaloniaEdit.Utils;
 
 namespace GDMENUCardManager
 {
     public class MainWindow : Window, INotifyPropertyChanged
     {
         private GDMENUCardManager.Core.Manager _ManagerInstance;
-        public GDMENUCardManager.Core.Manager Manager { get { return _ManagerInstance; } }
+        public GDMENUCardManager.Core.Manager Manager
+        {
+            get { return _ManagerInstance; }
+        }
 
         private readonly bool showAllDrives = false;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public ObservableCollection<DriveInfo> DriveList { get; } = new ObservableCollection<DriveInfo>();
+        public ObservableCollection<DriveInfo> DriveList { get; } =
+            new ObservableCollection<DriveInfo>();
 
         private bool _IsBusy;
         public bool IsBusy
         {
             get { return _IsBusy; }
-            private set { _IsBusy = value; RaisePropertyChanged(); }
+            private set
+            {
+                _IsBusy = value;
+                RaisePropertyChanged();
+            }
         }
 
         private DriveInfo _DriveInfo;
@@ -55,31 +68,46 @@ namespace GDMENUCardManager
         public string TempFolder
         {
             get { return _TempFolder; }
-            set { _TempFolder = value; RaisePropertyChanged(); }
+            set
+            {
+                _TempFolder = value;
+                RaisePropertyChanged();
+            }
         }
 
         private string _TotalFilesLength;
         public string TotalFilesLength
         {
             get { return _TotalFilesLength; }
-            private set { _TotalFilesLength = value; RaisePropertyChanged(); }
+            private set
+            {
+                _TotalFilesLength = value;
+                RaisePropertyChanged();
+            }
         }
 
         public MenuKind MenuKindSelected
         {
             get { return Manager.MenuKindSelected; }
-            set { Manager.MenuKindSelected = value; RaisePropertyChanged(); }
+            set
+            {
+                Manager.MenuKindSelected = value;
+                RaisePropertyChanged();
+            }
         }
 
         private string _Filter;
         public string Filter
         {
             get { return _Filter; }
-            set { _Filter = value; RaisePropertyChanged(); }
+            set
+            {
+                _Filter = value;
+                RaisePropertyChanged();
+            }
         }
 
         private readonly List<FileDialogFilter> fileFilterList;
-
 
         #region window controls
         DataGrid dg1;
@@ -94,7 +122,10 @@ namespace GDMENUCardManager
 #endif
 
             var compressedFileFormats = new string[] { ".7z", ".rar", ".zip" };
-            _ManagerInstance = GDMENUCardManager.Core.Manager.CreateInstance(new DependencyManager(), compressedFileFormats);
+            _ManagerInstance = GDMENUCardManager.Core.Manager.CreateInstance(
+                new DependencyManager(),
+                compressedFileFormats
+            );
             var fullList = Manager.supportedImageFormats.Concat(compressedFileFormats).ToArray();
             fileFilterList = new List<FileDialogFilter>
             {
@@ -105,7 +136,10 @@ namespace GDMENUCardManager
                 }
             };
 
-            this.Opened += (ss, ee) => { FillDriveList(); };
+            this.Opened += (ss, ee) =>
+            {
+                FillDriveList();
+            };
 
             this.Closing += MainWindow_Closing;
             this.PropertyChanged += MainWindow_PropertyChanged;
@@ -114,16 +148,26 @@ namespace GDMENUCardManager
             //config parsing. all settings are optional and must reverse to default values if missing
             bool.TryParse(ConfigurationManager.AppSettings["ShowAllDrives"], out showAllDrives);
             bool.TryParse(ConfigurationManager.AppSettings["Debug"], out Manager.debugEnabled);
-            if (bool.TryParse(ConfigurationManager.AppSettings["UseBinaryString"], out bool useBinaryString))
+            if (
+                bool.TryParse(
+                    ConfigurationManager.AppSettings["UseBinaryString"],
+                    out bool useBinaryString
+                )
+            )
                 Converter.ByteSizeToStringConverter.UseBinaryString = useBinaryString;
             if (int.TryParse(ConfigurationManager.AppSettings["CharLimit"], out int charLimit))
                 GdItem.namemaxlen = Math.Min(255, Math.Max(charLimit, 1));
-            if (bool.TryParse(ConfigurationManager.AppSettings["TruncateMenuGDI"], out bool truncateMenuGDI))
+            if (
+                bool.TryParse(
+                    ConfigurationManager.AppSettings["TruncateMenuGDI"],
+                    out bool truncateMenuGDI
+                )
+            )
                 Manager.TruncateMenuGDI = truncateMenuGDI;
 
             TempFolder = Path.GetTempPath();
             Title = "GD MENU Card Manager " + Constants.Version;
-            
+
             //showAllDrives = true;
 
             DataContext = this;
@@ -136,14 +180,16 @@ namespace GDMENUCardManager
             dg1 = this.FindControl<DataGrid>("dg1");
         }
 
-
         private async void MainWindow_PropertyChanged(object sender, PropertyChangedEventArgs e)
         {
             if (e.PropertyName == nameof(SelectedDrive) && SelectedDrive != null)
                 await LoadItemsFromCard();
         }
 
-        private void ItemList_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        private void ItemList_CollectionChanged(
+            object sender,
+            System.Collections.Specialized.NotifyCollectionChangedEventArgs e
+        )
         {
             updateTotalSize();
         }
@@ -153,7 +199,7 @@ namespace GDMENUCardManager
             if (IsBusy)
                 e.Cancel = true;
             else
-                Manager.ItemList.CollectionChanged -= ItemList_CollectionChanged;//release events
+                Manager.ItemList.CollectionChanged -= ItemList_CollectionChanged; //release events
         }
 
         private void RaisePropertyChanged([CallerMemberName] string propertyName = "")
@@ -164,9 +210,10 @@ namespace GDMENUCardManager
         private void updateTotalSize()
         {
             var bsize = ByteSizeLib.ByteSize.FromBytes(Manager.ItemList.Sum(x => x.Length.Bytes));
-            TotalFilesLength = Converter.ByteSizeToStringConverter.UseBinaryString ? bsize.ToBinaryString() : bsize.ToString();
+            TotalFilesLength = Converter.ByteSizeToStringConverter.UseBinaryString
+                ? bsize.ToBinaryString()
+                : bsize.ToString();
         }
-
 
         private async Task LoadItemsFromCard()
         {
@@ -178,7 +225,13 @@ namespace GDMENUCardManager
             }
             catch (Exception ex)
             {
-                await MessageBoxManager.GetMessageBoxStandardWindow("Invalid Folders", $"Problem loading the following folder(s):\n\n{ex.Message}", icon: MessageBox.Avalonia.Enums.Icon.Warning).ShowDialog(this);
+                await MessageBoxManager
+                    .GetMessageBoxStandardWindow(
+                        "Invalid Folders",
+                        $"Problem loading the following folder(s):\n\n{ex.Message}",
+                        icon: MessageBox.Avalonia.Enums.Icon.Warning
+                    )
+                    .ShowDialog(this);
             }
             finally
             {
@@ -193,16 +246,45 @@ namespace GDMENUCardManager
             try
             {
                 if (await Manager.Save(TempFolder))
-                    await MessageBoxManager.GetMessageBoxStandardWindow("Message", "Done!").ShowDialog(this);
+                {
+                    if (Manager.ItemList.Any(x => x.HasError))
+                    {
+                        // TODO: this is currently done to force a visual refresh because it's not working.
+                        // See https://stackoverflow.com/questions/1427471/observablecollection-not-noticing-when-item-in-it-changes-even-with-inotifyprop
+                        Manager.ItemList.Refresh();
+                        await MessageBoxManager
+                            .GetMessageBoxStandardWindow(
+                                "Warning",
+                                "Some items failed while processing. See the list for error details."
+                            )
+                            .ShowDialog(this);
+                    }
+                    else
+                    {
+                        await MessageBoxManager
+                            .GetMessageBoxStandardWindow("Message", "Done!")
+                            .ShowDialog(this);
+                    }
+                }
             }
             catch (Exception ex)
             {
-                await MessageBoxManager.GetMessageBoxStandardWindow("Error", ex.Message, icon: MessageBox.Avalonia.Enums.Icon.Error).ShowDialog(this);
+                await MessageBoxManager
+                    .GetMessageBoxStandardWindow(
+                        "Error",
+                        ex.Message,
+                        icon: MessageBox.Avalonia.Enums.Icon.Error
+                    )
+                    .ShowDialog(this);
             }
             finally
             {
                 IsBusy = false;
                 updateTotalSize();
+
+                // TODO: this is currently done to force a visual refresh because it's not working.
+                // See https://stackoverflow.com/questions/1427471/observablecollection-not-noticing-when-item-in-it-changes-even-with-inotifyprop
+                Manager.ItemList.Refresh();
             }
         }
 
@@ -231,11 +313,15 @@ namespace GDMENUCardManager
                     }
 
                     if (invalid.Any())
-                        await MessageBoxManager.GetMessageBoxStandardWindow("Ignored folders/files", string.Join(Environment.NewLine, invalid), icon: MessageBox.Avalonia.Enums.Icon.Error).ShowDialog(this);
+                        await MessageBoxManager
+                            .GetMessageBoxStandardWindow(
+                                "Ignored folders/files",
+                                string.Join(Environment.NewLine, invalid),
+                                icon: MessageBox.Avalonia.Enums.Icon.Error
+                            )
+                            .ShowDialog(this);
                 }
-                catch (Exception)
-                {
-                }
+                catch (Exception) { }
                 finally
                 {
                     IsBusy = false;
@@ -253,8 +339,18 @@ namespace GDMENUCardManager
             IsBusy = true;
             if (Manager.debugEnabled)
             {
-                var list = DriveInfo.GetDrives().Where(x => x.IsReady).Select(x => $"{x.DriveType}; {x.DriveFormat}; {x.Name}").ToArray();
-                await MessageBoxManager.GetMessageBoxStandardWindow("Debug", string.Join(Environment.NewLine, list), icon: MessageBox.Avalonia.Enums.Icon.None).ShowDialog(this);
+                var list = DriveInfo
+                    .GetDrives()
+                    .Where(x => x.IsReady)
+                    .Select(x => $"{x.DriveType}; {x.DriveFormat}; {x.Name}")
+                    .ToArray();
+                await MessageBoxManager
+                    .GetMessageBoxStandardWindow(
+                        "Debug",
+                        string.Join(Environment.NewLine, list),
+                        icon: MessageBox.Avalonia.Enums.Icon.None
+                    )
+                    .ShowDialog(this);
             }
             await new AboutWindow().ShowDialog(this);
             IsBusy = false;
@@ -285,9 +381,15 @@ namespace GDMENUCardManager
 
                 await new InfoWindow(item).ShowDialog(this);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
-                await MessageBoxManager.GetMessageBoxStandardWindow("Error", ex.Message, icon: MessageBox.Avalonia.Enums.Icon.Error).ShowDialog(this);
+                await MessageBoxManager
+                    .GetMessageBoxStandardWindow(
+                        "Error",
+                        ex.Message,
+                        icon: MessageBox.Avalonia.Enums.Icon.Error
+                    )
+                    .ShowDialog(this);
             }
             IsBusy = false;
         }
@@ -301,7 +403,13 @@ namespace GDMENUCardManager
             }
             catch (Exception ex)
             {
-                await MessageBoxManager.GetMessageBoxStandardWindow("Error", ex.Message, icon: MessageBox.Avalonia.Enums.Icon.Error).ShowDialog(this);
+                await MessageBoxManager
+                    .GetMessageBoxStandardWindow(
+                        "Error",
+                        ex.Message,
+                        icon: MessageBox.Avalonia.Enums.Icon.Error
+                    )
+                    .ShowDialog(this);
             }
             IsBusy = false;
         }
@@ -318,13 +426,26 @@ namespace GDMENUCardManager
                 if (!await w.ShowDialog<bool>(this))
                     return;
 
-                var count = await Manager.BatchRenameItems(w.NotOnCard, w.OnCard, w.FolderName, w.ParseTosec);
+                var count = await Manager.BatchRenameItems(
+                    w.NotOnCard,
+                    w.OnCard,
+                    w.FolderName,
+                    w.ParseTosec
+                );
 
-                await MessageBoxManager.GetMessageBoxStandardWindow("Done", $"{count} item(s) renamed").ShowDialog(this);
+                await MessageBoxManager
+                    .GetMessageBoxStandardWindow("Done", $"{count} item(s) renamed")
+                    .ShowDialog(this);
             }
             catch (Exception ex)
             {
-                await MessageBoxManager.GetMessageBoxStandardWindow("Error", ex.Message, icon: MessageBox.Avalonia.Enums.Icon.Error).ShowDialog(this);
+                await MessageBoxManager
+                    .GetMessageBoxStandardWindow(
+                        "Error",
+                        ex.Message,
+                        icon: MessageBox.Avalonia.Enums.Icon.Error
+                    )
+                    .ShowDialog(this);
             }
             finally
             {
@@ -345,7 +466,13 @@ namespace GDMENUCardManager
             catch (ProgressWindowClosedException) { }
             catch (Exception ex)
             {
-                await MessageBoxManager.GetMessageBoxStandardWindow("Error", ex.Message, icon: MessageBox.Avalonia.Enums.Icon.Error).ShowDialog(this);
+                await MessageBoxManager
+                    .GetMessageBoxStandardWindow(
+                        "Error",
+                        ex.Message,
+                        icon: MessageBox.Avalonia.Enums.Icon.Error
+                    )
+                    .ShowDialog(this);
             }
             finally
             {
@@ -362,13 +489,72 @@ namespace GDMENUCardManager
         {
             DriveInfo[] list;
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                list = DriveInfo.GetDrives().Where(x => x.IsReady && (showAllDrives || (x.DriveType == DriveType.Removable && x.DriveFormat.StartsWith("FAT")))).ToArray();
+                list = DriveInfo
+                    .GetDrives()
+                    .Where(
+                        x =>
+                            x.IsReady
+                            && (
+                                showAllDrives
+                                || (
+                                    x.DriveType == DriveType.Removable
+                                    && x.DriveFormat.StartsWith("FAT")
+                                )
+                            )
+                    )
+                    .ToArray();
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
                 //list = DriveInfo.GetDrives().Where(x => x.IsReady && (showAllDrives || x.DriveType == DriveType.Removable || x.DriveType == DriveType.Fixed)).ToArray();//todo need to test
-                list = DriveInfo.GetDrives().Where(x => x.IsReady && (showAllDrives || x.DriveType == DriveType.Removable || x.DriveType == DriveType.Fixed || (x.DriveType == DriveType.Unknown && x.DriveFormat.Equals("lifs", StringComparison.InvariantCultureIgnoreCase)))).ToArray();//todo need to test
-            else//linux
-                list = DriveInfo.GetDrives().Where(x => x.IsReady && (showAllDrives || ((x.DriveType == DriveType.Removable || x.DriveType == DriveType.Fixed) && x.DriveFormat.Equals("msdos", StringComparison.InvariantCultureIgnoreCase) && (x.Name.StartsWith("/media/", StringComparison.InvariantCultureIgnoreCase) || x.Name.StartsWith("/run/media/", StringComparison.InvariantCultureIgnoreCase)) ))).ToArray();
-            
+                list = DriveInfo
+                    .GetDrives()
+                    .Where(
+                        x =>
+                            x.IsReady
+                            && (
+                                showAllDrives
+                                || x.DriveType == DriveType.Removable
+                                || x.DriveType == DriveType.Fixed
+                                || (
+                                    x.DriveType == DriveType.Unknown
+                                    && x.DriveFormat.Equals(
+                                        "lifs",
+                                        StringComparison.InvariantCultureIgnoreCase
+                                    )
+                                )
+                            )
+                    )
+                    .ToArray(); //todo need to test
+            else //linux
+                list = DriveInfo
+                    .GetDrives()
+                    .Where(
+                        x =>
+                            x.IsReady
+                            && (
+                                showAllDrives
+                                || (
+                                    (
+                                        x.DriveType == DriveType.Removable
+                                        || x.DriveType == DriveType.Fixed
+                                    )
+                                    && x.DriveFormat.Equals(
+                                        "msdos",
+                                        StringComparison.InvariantCultureIgnoreCase
+                                    )
+                                    && (
+                                        x.Name.StartsWith(
+                                            "/media/",
+                                            StringComparison.InvariantCultureIgnoreCase
+                                        )
+                                        || x.Name.StartsWith(
+                                            "/run/media/",
+                                            StringComparison.InvariantCultureIgnoreCase
+                                        )
+                                    )
+                                )
+                            )
+                    )
+                    .ToArray();
 
             if (isRefreshing)
             {
@@ -384,7 +570,12 @@ namespace GDMENUCardManager
                 try
                 {
                     DriveList.Add(drive);
-                    if (SelectedDrive == null && File.Exists(Path.Combine(drive.RootDirectory.FullName, Constants.MenuConfigTextFile)))
+                    if (
+                        SelectedDrive == null
+                        && File.Exists(
+                            Path.Combine(drive.RootDirectory.FullName, Constants.MenuConfigTextFile)
+                        )
+                    )
                         SelectedDrive = drive;
                 }
                 catch { }
@@ -414,7 +605,12 @@ namespace GDMENUCardManager
                 {
                     try
                     {
-                        if (drive.Name.StartsWith("/media/", StringComparison.InvariantCultureIgnoreCase))
+                        if (
+                            drive.Name.StartsWith(
+                                "/media/",
+                                StringComparison.InvariantCultureIgnoreCase
+                            )
+                        )
                         {
                             SelectedDrive = drive;
                             break;
@@ -436,16 +632,24 @@ namespace GDMENUCardManager
             var menuitem = (MenuItem)sender;
             var item = (GdItem)menuitem.CommandParameter;
 
-            var result = await MessageBoxManager.GetMessageBoxInputWindow(new MessageBox.Avalonia.DTO.MessageBoxInputParams
-            {
-                ContentTitle = "Rename",
-                ContentHeader = "inform new name",
-                ContentMessage = "Name",
-                WatermarkText = item.Name,
-                ShowInCenter = true,
-                WindowStartupLocation = WindowStartupLocation.CenterOwner,
-                ButtonDefinitions = new ButtonDefinition[] { new ButtonDefinition { Name = "Ok" }, new ButtonDefinition { Name = "Cancel" } },
-            }).ShowDialog(this);
+            var result = await MessageBoxManager
+                .GetMessageBoxInputWindow(
+                    new MessageBox.Avalonia.DTO.MessageBoxInputParams
+                    {
+                        ContentTitle = "Rename",
+                        ContentHeader = "inform new name",
+                        ContentMessage = "Name",
+                        WatermarkText = item.Name,
+                        ShowInCenter = true,
+                        WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                        ButtonDefinitions = new ButtonDefinition[]
+                        {
+                            new ButtonDefinition { Name = "Ok" },
+                            new ButtonDefinition { Name = "Cancel" }
+                        },
+                    }
+                )
+                .ShowDialog(this);
 
             if (result?.Button == "Ok" && !string.IsNullOrWhiteSpace(result.Message))
                 item.Name = result.Message.Trim();
@@ -453,7 +657,7 @@ namespace GDMENUCardManager
 
         private void MenuItemRenameSentence_Click(object sender, RoutedEventArgs e)
         {
-            TextInfo textInfo = new CultureInfo("en-US",false).TextInfo;
+            TextInfo textInfo = new CultureInfo("en-US", false).TextInfo;
 
             IEnumerable<GdItem> items = dg1.SelectedItems.Cast<GdItem>();
 
@@ -467,11 +671,12 @@ namespace GDMENUCardManager
         {
             await renameSelection(RenameBy.Ip);
         }
+
         private async void MenuItemRenameFolder_Click(object sender, RoutedEventArgs e)
         {
             await renameSelection(RenameBy.Folder);
-
         }
+
         private async void MenuItemRenameFile_Click(object sender, RoutedEventArgs e)
         {
             await renameSelection(RenameBy.File);
@@ -486,7 +691,13 @@ namespace GDMENUCardManager
             }
             catch (Exception ex)
             {
-                await MessageBoxManager.GetMessageBoxStandardWindow("Error", ex.Message, icon: MessageBox.Avalonia.Enums.Icon.Error).ShowDialog(this);
+                await MessageBoxManager
+                    .GetMessageBoxStandardWindow(
+                        "Error",
+                        ex.Message,
+                        icon: MessageBox.Avalonia.Enums.Icon.Error
+                    )
+                    .ShowDialog(this);
             }
             IsBusy = false;
         }
@@ -551,7 +762,7 @@ namespace GDMENUCardManager
                             await Manager.LoadIP(item);
                             IsBusy = false;
                         }
-                        if (item.Ip.Name != "GDMENU" && item.Ip.Name != "openMenu")//dont let the user exclude GDMENU, openMenu
+                        if (item.Ip.Name != "GDMENU" && item.Ip.Name != "openMenu") //dont let the user exclude GDMENU, openMenu
                             toRemove.Add(item);
                     }
                     else
@@ -580,11 +791,17 @@ namespace GDMENUCardManager
             if (files != null && files.Any())
             {
                 IsBusy = true;
-                
+
                 var invalid = await Manager.AddGames(files);
-                
+
                 if (invalid.Any())
-                    await MessageBoxManager.GetMessageBoxStandardWindow("Ignored folders/files", string.Join(Environment.NewLine, invalid), icon: MessageBox.Avalonia.Enums.Icon.Error).ShowDialog(this);
+                    await MessageBoxManager
+                        .GetMessageBoxStandardWindow(
+                            "Ignored folders/files",
+                            string.Join(Environment.NewLine, invalid),
+                            icon: MessageBox.Avalonia.Enums.Icon.Error
+                        )
+                        .ShowDialog(this);
 
                 IsBusy = false;
             }
@@ -604,11 +821,11 @@ namespace GDMENUCardManager
             if (!selectedItems.Any())
                 return;
 
-            int moveTo = Manager.ItemList.IndexOf(selectedItems.First()) -1;
+            int moveTo = Manager.ItemList.IndexOf(selectedItems.First()) - 1;
 
             if (moveTo < 0)
                 return;
-            
+
             foreach (var item in selectedItems)
                 Manager.ItemList.Remove(item);
 
@@ -654,10 +871,7 @@ namespace GDMENUCardManager
                 await Manager.LoadIpAll();
                 IsBusy = false;
             }
-            catch (ProgressWindowClosedException)
-            {
-
-            }
+            catch (ProgressWindowClosedException) { }
 
             if (dg1.SelectedIndex == -1 || !searchInGrid(dg1.SelectedIndex))
                 searchInGrid(0);
@@ -678,5 +892,57 @@ namespace GDMENUCardManager
             return false;
         }
 
+        private async void ButtonExportList_Click(object sender, RoutedEventArgs eventArgs)
+        {
+            var saveDialog = new SaveFileDialog
+            {
+                Filters =
+                {
+                    new FileDialogFilter { Name = "JSON File", Extensions = { "json" } }
+                }
+            };
+            var file = await saveDialog.ShowAsync(this);
+            if (file == null)
+                return;
+
+            var exportFileManager = new ExportFileManager(file);
+            await exportFileManager.WriteItems(Manager.ItemList);
+        }
+
+        private async void ButtonImportList_Click(object sender, RoutedEventArgs eventArgs)
+        {
+            var openDialog = new OpenFileDialog
+            {
+                AllowMultiple = false,
+                Filters =
+                {
+                    new FileDialogFilter { Name = "JSON File", Extensions = { "json" } }
+                }
+            };
+            var file = (await openDialog.ShowAsync(this))?.FirstOrDefault() ?? null;
+            if (file == null)
+                return;
+
+            var exportFileManager = new ExportFileManager(file);
+            var exportFile = await exportFileManager.ReadItems();
+
+            // add everything except menu items by union to our list.
+            var comparer = new GdItem.ImportComparer();
+            var newItems = exportFile
+                .ToGdItemList()
+                .Where(
+                    x =>
+                        !Manager.ItemList.Any(
+                            y =>
+                                comparer.GetHashCode(x) == comparer.GetHashCode(y)
+                                && comparer.Equals(x, y)
+                        )
+                );
+            Manager.ItemList.AddRange(newItems);
+        }
+
+        private async void ButtonErrorReport_Click(object sender, RoutedEventArgs eventArgs) { }
+
+        private async void ButtonRemoveErrors_Click(object sender, RoutedEventArgs eventArgs) { }
     }
 }

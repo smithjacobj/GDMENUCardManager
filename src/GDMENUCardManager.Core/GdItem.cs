@@ -1,4 +1,8 @@
-﻿using System.ComponentModel;
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -6,6 +10,26 @@ using ByteSizeLib;
 
 namespace GDMENUCardManager.Core
 {
+    public enum LocationEnum
+    {
+        [Display(Name = "Unset")]
+        Unset = 0,
+
+        [Display(Name = "Error")]
+        Error,
+
+        [Display(Name = "Other")]
+        Other,
+
+        [Display(Name = "SD Card")]
+        SdCard
+    }
+
+    public enum MenuEnum
+    {
+        gdMenu,
+        openMenu
+    }
 
     public sealed class GdItem : INotifyPropertyChanged
     {
@@ -18,7 +42,11 @@ namespace GDMENUCardManager.Core
         public ByteSize Length
         {
             get { return _Length; }
-            set { _Length = value; RaisePropertyChanged(); }
+            set
+            {
+                _Length = value;
+                RaisePropertyChanged();
+            }
         }
 
         //public long CdiTarget { get; set; }
@@ -40,7 +68,7 @@ namespace GDMENUCardManager.Core
                 RaisePropertyChanged();
             }
         }
-        
+
         private string _ProductNumber;
         public string ProductNumber
         {
@@ -67,39 +95,74 @@ namespace GDMENUCardManager.Core
             //set { _ImageFile = value; RaisePropertyChanged(); }
         }
 
-        public readonly System.Collections.Generic.List<string> ImageFiles = new System.Collections.Generic.List<string>();
+        public readonly System.Collections.Generic.List<string> ImageFiles =
+            new System.Collections.Generic.List<string>();
 
         private string _FullFolderPath;
         public string FullFolderPath
         {
             get { return _FullFolderPath; }
-            set { _FullFolderPath = value; RaisePropertyChanged(); }
+            set
+            {
+                _FullFolderPath = value;
+                RaisePropertyChanged();
+            }
         }
 
         private IpBin _Ip;
         public IpBin Ip
         {
             get { return _Ip; }
-            set { _Ip = value; RaisePropertyChanged(); }
+            set
+            {
+                _Ip = value;
+                RaisePropertyChanged();
+            }
         }
 
         private int _SdNumber;
         public int SdNumber
         {
             get { return _SdNumber; }
-            set { _SdNumber = value; RaisePropertyChanged(); RaisePropertyChanged(nameof(Location)); }
+            set
+            {
+                _SdNumber = value;
+                RaisePropertyChanged();
+                RaisePropertyChanged(nameof(Location));
+            }
         }
 
         private WorkMode _Work;
         public WorkMode Work
         {
             get { return _Work; }
-            set { _Work = value; RaisePropertyChanged(); }
+            set
+            {
+                _Work = value;
+                RaisePropertyChanged();
+            }
         }
 
-        public string Location
+        private LocationEnum ManualLocation = LocationEnum.Unset;
+        public LocationEnum Location
         {
-            get { return SdNumber == 0 ? "Other" : "SD Card"; }
+            get
+            {
+                if (HasError)
+                {
+                    return LocationEnum.Error;
+                }
+                if (ManualLocation == LocationEnum.Unset)
+                {
+                    return SdNumber == 0 ? LocationEnum.Other : LocationEnum.SdCard;
+                }
+                return ManualLocation;
+            }
+            set
+            {
+                ManualLocation = value;
+                RaisePropertyChanged();
+            }
         }
 
         public bool CanApplyGDIShrink { get; set; }
@@ -108,7 +171,46 @@ namespace GDMENUCardManager.Core
         public FileFormat FileFormat
         {
             get { return _FileFormat; }
-            set { _FileFormat = value; RaisePropertyChanged(); }
+            set
+            {
+                _FileFormat = value;
+                RaisePropertyChanged();
+            }
+        }
+
+        private string _ErrorState;
+        public string ErrorState
+        {
+            get => _ErrorState;
+            set
+            {
+                _ErrorState = value;
+                RaisePropertyChanged();
+            }
+        }
+
+        public bool HasError => !string.IsNullOrEmpty(ErrorState);
+
+        public bool IsMenuItem => typeof(MenuEnum).GetEnumNames().Contains(Name);
+
+        public bool ImportComparator(GdItem other)
+        {
+            return FullFolderPath == other.FullFolderPath
+                && new HashSet<string>(ImageFiles).SetEquals(other.ImageFiles);
+        }
+
+        public class ImportComparer : IEqualityComparer<GdItem>
+        {
+            public bool Equals(GdItem x, GdItem y)
+            {
+                return x.FullFolderPath == y.FullFolderPath
+                && new HashSet<string>(x.ImageFiles).SetEquals(y.ImageFiles);
+            }
+
+            public int GetHashCode([DisallowNull] GdItem obj)
+            {
+                return obj.FullFolderPath.GetHashCode();
+            }
         }
 
 #if DEBUG
@@ -123,6 +225,13 @@ namespace GDMENUCardManager.Core
         private void RaisePropertyChanged([CallerMemberName] string propertyName = "")
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        public void UpdateLength()
+        {
+            Length = ByteSize.FromBytes(
+                ImageFiles.Sum(x => new FileInfo(Path.Combine(FullFolderPath, x)).Length)
+            );
         }
     }
 }

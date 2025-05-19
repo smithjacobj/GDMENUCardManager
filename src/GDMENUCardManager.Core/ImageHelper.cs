@@ -96,7 +96,7 @@ namespace GDMENUCardManager.Core
             }
 
             if (itemImageFile == null)
-                throw new Exception("Cant't read data from file");
+                throw new Exception($"Can't read data from file {itemImageFile}");
 
             if (item.FileFormat == FileFormat.Uncompressed)
             {
@@ -266,6 +266,7 @@ namespace GDMENUCardManager.Core
                             if (inputFilter != null && inputFilter.IsOpened())
                                 inputFilter.Close();
 
+                          // @note: further up the stack on fallback
                             var temp = await CreateGdItem2Async(itemImageFile);
 
                             if (temp == null || temp.Ip == null)
@@ -295,7 +296,7 @@ namespace GDMENUCardManager.Core
             }
 
             if (ip == null)
-                throw new Exception("Cant't read data from file");
+                throw new Exception($"Can't read data from file {itemImageFile}");
 
 
             item.Ip = ip;
@@ -419,7 +420,8 @@ namespace GDMENUCardManager.Core
 
                 try
                 {
-                    if (! await Task.Run(() => opticalImage.Open(inputFilter)))
+                    // @note: this is where we open the image file
+                    if (!await Task.Run(() => opticalImage.Open(inputFilter)))
                         throw new Exception("Can't load game file");
 
                     Partition partition;
@@ -551,9 +553,9 @@ namespace GDMENUCardManager.Core
                 ip = await Task.Run(() => GetIpData(dataFile));
             }
 
-
+            // @note: this is where it fails if it can't read on fallback
             if (ip == null)
-                throw new Exception("Cant't read data from file");
+                throw new Exception($"Can't read data from file {itemImageFile}");
 
 
             item.Ip = ip;

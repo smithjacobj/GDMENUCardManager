@@ -49,11 +49,19 @@ namespace GDMENUCardManager
             string vga = item.Ip.Vga ? "   VGA" : null;
 
             StringBuilder sb = new StringBuilder();
-            sb.AppendLine("Folder:");
-            sb.AppendLine(Path.GetFileName(item.FullFolderPath));
-            sb.AppendLine();
-            sb.AppendLine("File:");
-            sb.AppendLine(Path.GetFileName(item.ImageFile));
+            if (item.HasError)
+            {
+                sb.AppendLine("Error:");
+                sb.AppendLine(item.ErrorState);
+            }
+            else
+            {
+                sb.AppendLine("Folder:");
+                sb.AppendLine(Path.GetFileName(item.FullFolderPath));
+                sb.AppendLine();
+                sb.AppendLine("File:");
+                sb.AppendLine(Path.GetFileName(item.ImageFile));
+            }
 
             FileInfo = sb.ToString();
 
