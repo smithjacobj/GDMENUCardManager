@@ -10,6 +10,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using NiceIO;
 
 namespace GDMENUCardManager.Core
 {
@@ -22,7 +23,7 @@ namespace GDMENUCardManager.Core
             string folderPath;
             string[] files;
 
-            FileAttributes attr = await Helper.GetAttributesAsync(fileOrFolderPath);//path is a file or folder?
+            FileAttributes attr = await Helper.GetAttributesAsync(fileOrFolderPath);
             if (attr.HasFlag(FileAttributes.Directory))
             {
                 folderPath = fileOrFolderPath;
@@ -43,6 +44,7 @@ namespace GDMENUCardManager.Core
 
             IpBin ip = null;
             string itemImageFile = null;
+            string sourceFilePath = null;
 
             //is uncompressed?
             foreach (var file in files)
@@ -51,6 +53,7 @@ namespace GDMENUCardManager.Core
                 if (Manager.supportedImageFormats.Any(x => x == fileExt))
                 {
                     itemImageFile = file;
+                    sourceFilePath = file;
                     break;
                 }
             }
@@ -59,6 +62,7 @@ namespace GDMENUCardManager.Core
             if (itemImageFile == null && files.Any(Helper.CompressedFileExpression))
             {
                 string compressedFile = files.First(Helper.CompressedFileExpression);
+                sourceFilePath = compressedFile;
                 
                 var filesInsideArchive = await Task.Run(() => Helper.DependencyManager.GetArchiveFiles(compressedFile));
 
@@ -127,11 +131,6 @@ namespace GDMENUCardManager.Core
                         default:
                             throw new NotSupportedException();
                     }
-
-                    //if(!opticalImage.Identify(inputFilter))
-                    //    throw new NotSupportedException();
-
-                    //todo check imageFormat null Image format not identified.
 
                     try
                     {
@@ -317,7 +316,8 @@ namespace GDMENUCardManager.Core
             if (item.FullFolderPath.StartsWith(Manager.sdPath, StringComparison.InvariantCultureIgnoreCase) && int.TryParse(Path.GetFileName(Path.GetDirectoryName(itemImageFile)), out int number))
                 item.SdNumber = number;
 
-            //item.ImageFile = Path.GetFileName(item.ImageFile);
+            if (item.Location != LocationEnum.SdCard)
+                item.SourcePath = new NPath(sourceFilePath).Parent.ToString();
 
             return item;
         }

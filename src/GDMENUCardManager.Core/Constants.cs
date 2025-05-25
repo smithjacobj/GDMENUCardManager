@@ -5,6 +5,7 @@
         public const string NameTextFile = "name.txt";
         public const string SerialTextFile = "serial.txt";
         public const string ErrorTextFile = "error.txt";
+        public const string JsonGdItemFile = "item.json";
         //private const string InfoTextFile = "info.txt";
         public const string MenuConfigTextFile = "GDEMU.ini";
         public const string GdiShrinkBlacklistFile = "gdishrink_blacklist.txt";

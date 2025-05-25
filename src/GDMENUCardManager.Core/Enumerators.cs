@@ -1,4 +1,6 @@
-﻿namespace GDMENUCardManager.Core
+﻿using System;
+
+namespace GDMENUCardManager.Core
 {
     public enum WorkMode
     {
@@ -32,5 +34,13 @@
         None,
         gdMenu,
         openMenu
+    }
+
+    public static class EnumHelpers
+    {
+        public static MenuKind GetMenuKindFromName(string name)
+        {
+            return Enum.TryParse<MenuKind>(name, true, out var value) ? value : MenuKind.None;
+        }
     }
 }

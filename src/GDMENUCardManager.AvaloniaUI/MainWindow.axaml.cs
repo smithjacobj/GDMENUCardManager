@@ -21,6 +21,7 @@ using Avalonia.Data.Converters;
 using Avalonia;
 using System.Reactive.Linq;
 using AvaloniaEdit.Utils;
+using System.Text;
 
 namespace GDMENUCardManager
 {
@@ -237,6 +238,7 @@ namespace GDMENUCardManager
             {
                 RaisePropertyChanged(nameof(MenuKindSelected));
                 IsBusy = false;
+                Manager.ItemList.Refresh();
             }
         }
 
@@ -269,6 +271,8 @@ namespace GDMENUCardManager
             }
             catch (Exception ex)
             {
+                // @note: perhaps we want to mention if we have some sort of failure that leaves the
+                // card in a bad state
                 await MessageBoxManager
                     .GetMessageBoxStandardWindow(
                         "Error",
@@ -929,7 +933,7 @@ namespace GDMENUCardManager
             // add everything except menu items by union to our list.
             var comparer = new GdItem.ImportComparer();
             var newItems = exportFile
-                .ToGdItemList()
+                .ItemList
                 .Where(
                     x =>
                         !Manager.ItemList.Any(
@@ -941,7 +945,28 @@ namespace GDMENUCardManager
             Manager.ItemList.AddRange(newItems);
         }
 
-        private async void ButtonErrorReport_Click(object sender, RoutedEventArgs eventArgs) { }
+        private async void ButtonErrorReport_Click(object sender, RoutedEventArgs eventArgs) {
+            var saveDialog = new SaveFileDialog
+            {
+                Filters = {
+                    new FileDialogFilter { Name = "Text File", Extensions = { "txt" } }
+                }
+            };
+
+            var file = await saveDialog.ShowAsync(this);
+            if (file == null) return;
+
+            await using var writer = File.Create(file);
+            var sb = new StringBuilder();
+            foreach (var item in Manager.ItemList.Where(x => x.HasError))
+            {
+                sb.Clear();
+                sb.AppendLine($"# {item.Name}");
+                sb.AppendLine($"  Error:");
+                sb.AppendLine($"  {item.ErrorState}");
+                writer.Write(Encoding.UTF8.GetBytes(sb.ToString()));
+            }
+        }
 
         private async void ButtonRemoveErrors_Click(object sender, RoutedEventArgs eventArgs) { }
     }
