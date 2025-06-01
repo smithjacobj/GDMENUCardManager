@@ -12,5 +12,6 @@
         public const string PS1GameDBFile = "gamedb.json";
         public const string DefaultImageFileName = "disc";
         public const string Version = "v2.0.1";
+        public static readonly string k_UnknownDiscNumber = "?/?";
     }
 }

@@ -90,7 +90,7 @@ namespace GDMENUCardManager.Core
                     ip = new IpBin
                     {
                         Name = itemName,
-                        Disc = "?/?",
+                        Disc = Constants.k_UnknownDiscNumber,
                         ProductNumber = String.Empty
                     };
 

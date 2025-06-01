@@ -238,7 +238,6 @@ namespace GDMENUCardManager
             {
                 RaisePropertyChanged(nameof(MenuKindSelected));
                 IsBusy = false;
-                Manager.ItemList.Refresh();
             }
         }
 
@@ -251,9 +250,6 @@ namespace GDMENUCardManager
                 {
                     if (Manager.ItemList.Any(x => x.HasError))
                     {
-                        // TODO: this is currently done to force a visual refresh because it's not working.
-                        // See https://stackoverflow.com/questions/1427471/observablecollection-not-noticing-when-item-in-it-changes-even-with-inotifyprop
-                        Manager.ItemList.Refresh();
                         await MessageBoxManager
                             .GetMessageBoxStandardWindow(
                                 "Warning",
@@ -285,10 +281,6 @@ namespace GDMENUCardManager
             {
                 IsBusy = false;
                 updateTotalSize();
-
-                // TODO: this is currently done to force a visual refresh because it's not working.
-                // See https://stackoverflow.com/questions/1427471/observablecollection-not-noticing-when-item-in-it-changes-even-with-inotifyprop
-                Manager.ItemList.Refresh();
             }
         }
 
@@ -758,7 +750,7 @@ namespace GDMENUCardManager
                 List<GdItem> toRemove = new List<GdItem>();
                 foreach (GdItem item in dg1.SelectedItems)
                 {
-                    if (item.SdNumber == 1)
+                    if (item.IsMenuItem)
                     {
                         if (item.Ip == null)
                         {

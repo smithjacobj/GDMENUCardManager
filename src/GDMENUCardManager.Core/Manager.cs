@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
@@ -82,13 +83,30 @@ namespace GDMENUCardManager.Core
 
         public class GdItemList : ObservableCollection<GdItem>
         {
-            public void Refresh()
+            protected override event PropertyChangedEventHandler PropertyChanged;
+
+            protected virtual void OnPropertyChanged(object sender, PropertyChangedEventArgs e)
             {
-                OnCollectionChanged(
-                    new System.Collections.Specialized.NotifyCollectionChangedEventArgs(
-                        System.Collections.Specialized.NotifyCollectionChangedAction.Reset
-                    )
-                );
+                PropertyChanged?.Invoke(sender, e);
+            }
+
+            protected override void InsertItem(int index, GdItem item)
+            {
+                item.PropertyChanged += OnPropertyChanged;
+                base.InsertItem(index, item);
+            }
+
+            protected override void RemoveItem(int index)
+            {
+                this[index].PropertyChanged -= OnPropertyChanged;
+                base.RemoveItem(index);
+            }
+
+            protected override void SetItem(int index, GdItem item)
+            {
+                this[index].PropertyChanged -= OnPropertyChanged;
+                base.SetItem(index, item);
+                item.PropertyChanged += OnPropertyChanged;
             }
         }
 
@@ -201,7 +219,7 @@ namespace GDMENUCardManager.Core
             }
         }
 
-        private async ValueTask loadIP(IEnumerable<GdItem> items)
+        private async ValueTask LoadIpRange(IEnumerable<GdItem> items)
         {
             var query = items.Where(x => x.Ip == null);
             if (!query.Any())
@@ -235,13 +253,11 @@ namespace GDMENUCardManager.Core
 
         public ValueTask LoadIpAll()
         {
-            return loadIP(ItemList);
+            return LoadIpRange(ItemList);
         }
 
         public async Task LoadIP(GdItem item)
         {
-            //await Task.Delay(2000);
-
             string filePath = string.Empty;
             try
             {
@@ -257,6 +273,8 @@ namespace GDMENUCardManager.Core
             {
                 throw new Exception("Error loading file " + filePath);
             }
+
+            item.ProductNumber = item.Ip.ProductNumber;
         }
 
         public async Task RenameItems(IEnumerable<GdItem> items, RenameBy renameBy)
@@ -264,7 +282,7 @@ namespace GDMENUCardManager.Core
             if (renameBy == RenameBy.Ip)
                 try
                 {
-                    await loadIP(items);
+                    await LoadIpRange(items);
                 }
                 catch (ProgressWindowClosedException)
                 {
@@ -304,7 +322,7 @@ namespace GDMENUCardManager.Core
 
             foreach (var item in ItemList)
             {
-                if (item.SdNumber == 1)
+                if (item.IsMenuItem)
                 {
                     if (item.Ip == null)
                         await LoadIP(item);
@@ -512,8 +530,9 @@ namespace GDMENUCardManager.Core
             await RemoveUnusedItems();
 
             // @todo: figure out progress reporting. maybe based on count on sd card vs total count
-            foreach (var item in ItemList)
+            for (int i = 0; i < ItemList.Count; i++)
             {
+                GdItem item = ItemList[i];
                 if (item.IsMenuItem)
                 {
                     continue;
@@ -525,7 +544,7 @@ namespace GDMENUCardManager.Core
                     if (!await MoveFromAside(item))
                     {
                         // If that fails, do the process to load it from the source location
-                        await CopyNewItem(tempDirectory, item);
+                        item = await CopyNewItem(tempDirectory, item);
                     }
                 }
                 catch
@@ -576,7 +595,6 @@ namespace GDMENUCardManager.Core
                     throw new InvalidDataException("No GDEMU menu image was selected");
             }
 
-            item.SdNumber = 1;
             ItemList.Insert(0, item);
 
             await CopyItemToSdCard(item);
@@ -851,7 +869,7 @@ namespace GDMENUCardManager.Core
         /// <param name="item">the GdItem that tracks the image we're copying</param>
         /// <returns></returns>
         /// <exception cref="InvalidDataException">Errors occurring during decompression or image reading</exception>
-        private async Task CopyNewItem(NPath tempdir, GdItem item)
+        private async Task<GdItem> CopyNewItem(NPath tempdir, GdItem item)
         {
             // @todo: figure out item shrink
             var sha1 = SHA1.Create();
@@ -890,14 +908,15 @@ namespace GDMENUCardManager.Core
                         );
                     }
 
-                    // update SourcePath on successful extraction
-                    item.SourcePath = extractDir.ToString();
-
-                    var gdi = await ImageHelper.CreateGdItemAsync(extractDir.ToString());
-                    if (gdi == null)
+                    var newItem = await ImageHelper.CreateGdItemAsync(extractDir.ToString());
+                    if (newItem == null)
                     {
                         throw new InvalidDataException("An error prevented the GDI from loading");
                     }
+
+                    newItem.SdNumber = item.SdNumber;
+                    newItem.SourcePath = extractDir.ToString();
+                    item = newItem;
 
                     outputPath = await CopyItemToSdCard(item);
                 }
@@ -913,6 +932,7 @@ namespace GDMENUCardManager.Core
                     }
                 }
             }
+            return item;
         }
 
         private async Task<NPath> CopyItemToSdCard(GdItem item)
@@ -927,6 +947,7 @@ namespace GDMENUCardManager.Core
 
             await sourceFolder.CopyDirectoryAsync(itemSdPath);
             item.Location = LocationEnum.SdCard;
+            item.FullFolderPath = itemSdPath.ToString();
 
             return itemSdPath;
         }
@@ -1188,19 +1209,23 @@ namespace GDMENUCardManager.Core
                 return;
             }
 
-            var sortedlist = new List<GdItem>(ItemList.Count);
-            if (ItemList.First().Ip.Name == "GDMENU" || ItemList.First().Ip.Name == "openMenu")
+            var sortedList = new List<GdItem>(ItemList.Count);
+
+            var menuItem = ItemList.FirstOrDefault(x => x.IsMenuItem);
+            if (menuItem != null)
             {
-                sortedlist.Add(ItemList.First());
-                ItemList.RemoveAt(0);
+                sortedList.Add(menuItem);
+                ItemList.Remove(menuItem);
             }
 
             foreach (var item in ItemList.OrderBy(x => x.Name).ThenBy(x => x.Ip.Disc))
-                sortedlist.Add(item);
+                sortedList.Add(item);
 
             ItemList.Clear();
-            foreach (var item in sortedlist)
+            foreach (var item in sortedList)
+            {
                 ItemList.Add(item);
+            }
         }
 
         private async Task Uncompress(GdItem item, int folderNumber)
@@ -1334,7 +1359,6 @@ namespace GDMENUCardManager.Core
             {
                 if (item.IsMenuItem)
                 {
-                    item.SdNumber = 1;
                     continue;
                 }
                 item.SdNumber = i;

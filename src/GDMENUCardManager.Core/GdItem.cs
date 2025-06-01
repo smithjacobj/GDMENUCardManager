@@ -50,14 +50,14 @@ namespace GDMENUCardManager.Core
                 if (string.IsNullOrEmpty(_Guid))
                 {
                     _Guid = System.Guid.NewGuid().ToString();
-                    RaisePropertyChanged();
+                    OnPropertyChanged();
                 }
                 return _Guid;
             }
             set
             {
                 _Guid = value;
-                RaisePropertyChanged();
+                OnPropertyChanged();
             }
         }
 
@@ -73,7 +73,7 @@ namespace GDMENUCardManager.Core
             set
             {
                 _Length = value;
-                RaisePropertyChanged();
+                OnPropertyChanged();
             }
         }
 
@@ -94,7 +94,7 @@ namespace GDMENUCardManager.Core
                     _Name = Helper.RemoveDiacritics(_Name).Replace("_", " ").Trim();
                 }
 
-                RaisePropertyChanged();
+                OnPropertyChanged();
             }
         }
 
@@ -114,7 +114,7 @@ namespace GDMENUCardManager.Core
                         _ProductNumber = _ProductNumber.Substring(0, serialmaxlen);
                 }
 
-                RaisePropertyChanged();
+                OnPropertyChanged();
             }
         }
 
@@ -143,7 +143,7 @@ namespace GDMENUCardManager.Core
             set
             {
                 _FullFolderPath = value;
-                RaisePropertyChanged();
+                OnPropertyChanged();
             }
         }
 
@@ -157,7 +157,7 @@ namespace GDMENUCardManager.Core
             set
             {
                 _SourcePath = value;
-                RaisePropertyChanged();
+                OnPropertyChanged();
             }
         }
 
@@ -171,7 +171,12 @@ namespace GDMENUCardManager.Core
             set
             {
                 _Ip = value;
-                RaisePropertyChanged();
+                _Ip.PropertyChanged += (o, args) =>
+                {
+                    OnPropertyChanged(nameof(Ip));
+                    OnPropertyChanged(nameof(ProductNumber));
+                };
+                OnPropertyChanged();
             }
         }
 
@@ -181,12 +186,15 @@ namespace GDMENUCardManager.Core
         private int _SdNumber;
         public int SdNumber
         {
-            get { return _SdNumber; }
+            get { return IsMenuItem ? 1 : _SdNumber; }
             set
             {
+                if (IsMenuItem)
+                {
+                    return;
+                }
                 _SdNumber = value;
-                RaisePropertyChanged();
-                RaisePropertyChanged(nameof(Location));
+                OnPropertyChanged();
             }
         }
 
@@ -202,7 +210,7 @@ namespace GDMENUCardManager.Core
             set
             {
                 _Work = value;
-                RaisePropertyChanged();
+                OnPropertyChanged();
             }
         }
 
@@ -223,7 +231,7 @@ namespace GDMENUCardManager.Core
             set
             {
                 _Location = value;
-                RaisePropertyChanged();
+                OnPropertyChanged();
             }
         }
 
@@ -242,7 +250,7 @@ namespace GDMENUCardManager.Core
             set
             {
                 _FileFormat = value;
-                RaisePropertyChanged();
+                OnPropertyChanged();
             }
         }
 
@@ -256,7 +264,7 @@ namespace GDMENUCardManager.Core
             set
             {
                 _ErrorState = value;
-                RaisePropertyChanged();
+                OnPropertyChanged();
             }
         }
 
@@ -276,13 +284,13 @@ namespace GDMENUCardManager.Core
         {
             public bool Equals(GdItem x, GdItem y)
             {
-                var xDisc = string.IsNullOrEmpty(x.Ip?.Disc) ? "?" : x.Ip?.Disc;
-                var yDisc = string.IsNullOrEmpty(y.Ip?.Disc) ? "?" : y.Ip?.Disc;
+                var xDisc = string.IsNullOrEmpty(x.Ip?.Disc) ? Constants.k_UnknownDiscNumber : x.Ip?.Disc;
+                var yDisc = string.IsNullOrEmpty(y.Ip?.Disc) ? Constants.k_UnknownDiscNumber : y.Ip?.Disc;
                 return !string.IsNullOrEmpty(x.ProductNumber)
                     && !string.IsNullOrEmpty(y.ProductNumber)
                     && x.ProductNumber == y.ProductNumber
-                    && xDisc != "?"
-                    && yDisc != "?"
+                    && xDisc != Constants.k_UnknownDiscNumber
+                    && yDisc != Constants.k_UnknownDiscNumber
                     && x.Ip.Disc == y.Ip.Disc;
             }
 
@@ -326,7 +334,7 @@ namespace GDMENUCardManager.Core
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        private void RaisePropertyChanged([CallerMemberName] string propertyName = "")
+        private void OnPropertyChanged([CallerMemberName] string propertyName = "")
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
@@ -336,11 +344,6 @@ namespace GDMENUCardManager.Core
             Length = ByteSize.FromBytes(
                 ImageFiles.Sum(x => new FileInfo(Path.Combine(FullFolderPath, x)).Length)
             );
-        }
-
-        internal GdItem ShallowCopy()
-        {
-            return (GdItem)MemberwiseClone();
         }
     }
 }
