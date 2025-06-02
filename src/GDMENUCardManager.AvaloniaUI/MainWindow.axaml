@@ -80,7 +80,7 @@
           </Grid.ColumnDefinitions>
 
           <TextBlock Grid.Column="0" Margin="0 3 0 0">SD Drive</TextBlock>
-          <ComboBox Grid.Column="1" Items="{Binding DriveList, Mode=OneWay}" SelectedItem="{Binding SelectedDrive}" ToolTip.Tip="{Binding Path=SelectedDrive.VolumeLabel, Mode=OneWay}" />
+          <ComboBox Grid.Column="1" ItemsSource="{Binding DriveList, Mode=OneWay}" SelectedItem="{Binding SelectedDrive}" ToolTip.Tip="{Binding Path=SelectedDrive.VolumeLabel, Mode=OneWay}" />
           <Button Grid.Column="2" Width="30" Margin="10 0 0 0" ToolTip.Tip="Refresh Drive List" Click="ButtonRefreshDrive_Click">
             <ContentControl Content="{StaticResource ViewRefresh}"/>
           </Button>
@@ -141,7 +141,7 @@
           </Button>
         </Grid>
         
-        <DataGrid Name="dg1" Items="{Binding Manager.ItemList, Mode=OneTime}" IsEnabled="{Binding Path=!IsBusy, Mode=OneWay}" AutoGenerateColumns="False" CanUserResizeColumns="False" CanUserSortColumns="False" CanUserReorderColumns="False" KeyDown="GridOnKeyDown" RowBackground="{DynamicResource ThemeBackgroundBrush}" AlternatingRowBackground="{DynamicResource ThemeBackgroundBrush}">
+        <DataGrid Name="dg1" ItemsSource="{Binding Manager.ItemList, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding Path=!IsBusy, Mode=OneWay}" AutoGenerateColumns="False" CanUserResizeColumns="False" CanUserSortColumns="False" CanUserReorderColumns="False" KeyDown="GridOnKeyDown" RowBackground="{DynamicResource ThemeBackgroundBrush}">
           <DataGrid.Styles>
             <Style Selector="DataGridRow">
               <Setter Property="ContextMenu" Value="{DynamicResource rowmenu}"/>

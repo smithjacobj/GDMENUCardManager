@@ -2,9 +2,9 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
-using MessageBox.Avalonia;
-using MessageBox.Avalonia.Enums;
-using MessageBox.Avalonia.Models;
+using MsBox.Avalonia;
+using MsBox.Avalonia.Enums;
+using MsBox.Avalonia.Models;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -29,7 +29,7 @@ using Avalonia.Media;
 
 namespace GDMENUCardManager
 {
-    public class AboutWindow : Window, INotifyPropertyChanged
+    public partial class AboutWindow : Window, INotifyPropertyChanged
     {
         public string CurrentVersion => Constants.Version;
 

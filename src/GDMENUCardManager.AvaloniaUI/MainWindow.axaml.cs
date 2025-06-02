@@ -2,8 +2,8 @@
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
-using MessageBox.Avalonia;
-using MessageBox.Avalonia.Models;
+using MsBox.Avalonia;
+using MsBox.Avalonia.Models;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -16,16 +16,14 @@ using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using GDMENUCardManager.Core;
 using System.Configuration;
-using JetBrains.Annotations;
 using Avalonia.Data.Converters;
 using Avalonia;
-using System.Reactive.Linq;
 using AvaloniaEdit.Utils;
 using System.Text;
 
 namespace GDMENUCardManager
 {
-    public class MainWindow : Window, INotifyPropertyChanged
+    public partial class MainWindow : Window, INotifyPropertyChanged
     {
         private GDMENUCardManager.Core.Manager _ManagerInstance;
         public GDMENUCardManager.Core.Manager Manager
@@ -111,7 +109,7 @@ namespace GDMENUCardManager
         private readonly List<FileDialogFilter> fileFilterList;
 
         #region window controls
-        DataGrid dg1;
+        //DataGrid dg1;
         #endregion
 
         public MainWindow()
@@ -227,12 +225,12 @@ namespace GDMENUCardManager
             catch (Exception ex)
             {
                 await MessageBoxManager
-                    .GetMessageBoxStandardWindow(
+                    .GetMessageBoxStandard(
                         "Invalid Folders",
                         $"Problem loading the following folder(s):\n\n{ex.Message}",
-                        icon: MessageBox.Avalonia.Enums.Icon.Warning
+                        icon: MsBox.Avalonia.Enums.Icon.Warning
                     )
-                    .ShowDialog(this);
+                    .ShowWindowDialogAsync(this);
             }
             finally
             {
@@ -251,17 +249,17 @@ namespace GDMENUCardManager
                     if (Manager.ItemList.Any(x => x.HasError))
                     {
                         await MessageBoxManager
-                            .GetMessageBoxStandardWindow(
+                            .GetMessageBoxStandard(
                                 "Warning",
                                 "Some items failed while processing. See the list for error details."
                             )
-                            .ShowDialog(this);
+                            .ShowWindowDialogAsync(this);
                     }
                     else
                     {
                         await MessageBoxManager
-                            .GetMessageBoxStandardWindow("Message", "Done!")
-                            .ShowDialog(this);
+                            .GetMessageBoxStandard("Message", "Done!")
+                            .ShowWindowDialogAsync(this);
                     }
                 }
             }
@@ -270,12 +268,12 @@ namespace GDMENUCardManager
                 // @note: perhaps we want to mention if we have some sort of failure that leaves the
                 // card in a bad state
                 await MessageBoxManager
-                    .GetMessageBoxStandardWindow(
+                    .GetMessageBoxStandard(
                         "Error",
                         ex.Message,
-                        icon: MessageBox.Avalonia.Enums.Icon.Error
+                        icon: MsBox.Avalonia.Enums.Icon.Error
                     )
-                    .ShowDialog(this);
+                    .ShowWindowDialogAsync(this);
             }
             finally
             {
@@ -310,12 +308,12 @@ namespace GDMENUCardManager
 
                     if (invalid.Any())
                         await MessageBoxManager
-                            .GetMessageBoxStandardWindow(
+                            .GetMessageBoxStandard(
                                 "Ignored folders/files",
                                 string.Join(Environment.NewLine, invalid),
-                                icon: MessageBox.Avalonia.Enums.Icon.Error
+                                icon: MsBox.Avalonia.Enums.Icon.Error
                             )
-                            .ShowDialog(this);
+                            .ShowWindowDialogAsync(this);
                 }
                 catch (Exception) { }
                 finally
@@ -341,12 +339,12 @@ namespace GDMENUCardManager
                     .Select(x => $"{x.DriveType}; {x.DriveFormat}; {x.Name}")
                     .ToArray();
                 await MessageBoxManager
-                    .GetMessageBoxStandardWindow(
+                    .GetMessageBoxStandard(
                         "Debug",
                         string.Join(Environment.NewLine, list),
-                        icon: MessageBox.Avalonia.Enums.Icon.None
+                        icon: MsBox.Avalonia.Enums.Icon.None
                     )
-                    .ShowDialog(this);
+                    .ShowWindowDialogAsync(this);
             }
             await new AboutWindow().ShowDialog(this);
             IsBusy = false;
@@ -380,12 +378,12 @@ namespace GDMENUCardManager
             catch (Exception ex)
             {
                 await MessageBoxManager
-                    .GetMessageBoxStandardWindow(
+                    .GetMessageBoxStandard(
                         "Error",
                         ex.Message,
-                        icon: MessageBox.Avalonia.Enums.Icon.Error
+                        icon: MsBox.Avalonia.Enums.Icon.Error
                     )
-                    .ShowDialog(this);
+                    .ShowWindowDialogAsync(this);
             }
             IsBusy = false;
         }
@@ -400,12 +398,12 @@ namespace GDMENUCardManager
             catch (Exception ex)
             {
                 await MessageBoxManager
-                    .GetMessageBoxStandardWindow(
+                    .GetMessageBoxStandard(
                         "Error",
                         ex.Message,
-                        icon: MessageBox.Avalonia.Enums.Icon.Error
+                        icon: MsBox.Avalonia.Enums.Icon.Error
                     )
-                    .ShowDialog(this);
+                    .ShowWindowDialogAsync(this);
             }
             IsBusy = false;
         }
@@ -430,18 +428,18 @@ namespace GDMENUCardManager
                 );
 
                 await MessageBoxManager
-                    .GetMessageBoxStandardWindow("Done", $"{count} item(s) renamed")
-                    .ShowDialog(this);
+                    .GetMessageBoxStandard("Done", $"{count} item(s) renamed")
+                    .ShowWindowDialogAsync(this);
             }
             catch (Exception ex)
             {
                 await MessageBoxManager
-                    .GetMessageBoxStandardWindow(
+                    .GetMessageBoxStandard(
                         "Error",
                         ex.Message,
-                        icon: MessageBox.Avalonia.Enums.Icon.Error
+                        icon: MsBox.Avalonia.Enums.Icon.Error
                     )
-                    .ShowDialog(this);
+                    .ShowWindowDialogAsync(this);
             }
             finally
             {
@@ -463,12 +461,12 @@ namespace GDMENUCardManager
             catch (Exception ex)
             {
                 await MessageBoxManager
-                    .GetMessageBoxStandardWindow(
+                    .GetMessageBoxStandard(
                         "Error",
                         ex.Message,
-                        icon: MessageBox.Avalonia.Enums.Icon.Error
+                        icon: MsBox.Avalonia.Enums.Icon.Error
                     )
-                    .ShowDialog(this);
+                    .ShowWindowDialogAsync(this);
             }
             finally
             {
@@ -628,27 +626,28 @@ namespace GDMENUCardManager
             var menuitem = (MenuItem)sender;
             var item = (GdItem)menuitem.CommandParameter;
 
-            var result = await MessageBoxManager
-                .GetMessageBoxInputWindow(
-                    new MessageBox.Avalonia.DTO.MessageBoxInputParams
-                    {
-                        ContentTitle = "Rename",
-                        ContentHeader = "inform new name",
-                        ContentMessage = "Name",
-                        WatermarkText = item.Name,
-                        ShowInCenter = true,
-                        WindowStartupLocation = WindowStartupLocation.CenterOwner,
-                        ButtonDefinitions = new ButtonDefinition[]
+            var msBox = MessageBoxManager.GetMessageBoxCustom(new MsBox.Avalonia.Dto.MessageBoxCustomParams
+            {
+                ContentTitle = "Rename",
+                ContentHeader = "inform new name",
+                ContentMessage = "Name",
+                InputParams =
+                {
+                    DefaultValue = item.Name,
+                    Multiline = false
+                },
+                ShowInCenter = true,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                ButtonDefinitions = new ButtonDefinition[]
                         {
                             new ButtonDefinition { Name = "Ok" },
                             new ButtonDefinition { Name = "Cancel" }
-                        },
-                    }
-                )
-                .ShowDialog(this);
+                        }
+            });
+            var result = await msBox.ShowWindowDialogAsync(this);
 
-            if (result?.Button == "Ok" && !string.IsNullOrWhiteSpace(result.Message))
-                item.Name = result.Message.Trim();
+            if (result == "Ok" && !string.IsNullOrWhiteSpace(msBox.InputValue))
+                item.Name = msBox.InputValue.Trim();
         }
 
         private void MenuItemRenameSentence_Click(object sender, RoutedEventArgs e)
@@ -688,12 +687,12 @@ namespace GDMENUCardManager
             catch (Exception ex)
             {
                 await MessageBoxManager
-                    .GetMessageBoxStandardWindow(
+                    .GetMessageBoxStandard(
                         "Error",
                         ex.Message,
-                        icon: MessageBox.Avalonia.Enums.Icon.Error
+                        icon: MsBox.Avalonia.Enums.Icon.Error
                     )
-                    .ShowDialog(this);
+                    .ShowWindowDialogAsync(this);
             }
             IsBusy = false;
         }
@@ -792,12 +791,12 @@ namespace GDMENUCardManager
 
                 if (invalid.Any())
                     await MessageBoxManager
-                        .GetMessageBoxStandardWindow(
+                        .GetMessageBoxStandard(
                             "Ignored folders/files",
                             string.Join(Environment.NewLine, invalid),
-                            icon: MessageBox.Avalonia.Enums.Icon.Error
+                            icon: MsBox.Avalonia.Enums.Icon.Error
                         )
-                        .ShowDialog(this);
+                        .ShowWindowDialogAsync(this);
 
                 IsBusy = false;
             }

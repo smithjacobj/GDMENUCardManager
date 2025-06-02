@@ -11,7 +11,7 @@ using GDMENUCardManager.Core;
 
 namespace GDMENUCardManager
 {
-    public class InfoWindow : Window, INotifyPropertyChanged
+    public partial class InfoWindow : Window, INotifyPropertyChanged
     {
         public string FileInfo { get; }
         public string IpInfo { get; }

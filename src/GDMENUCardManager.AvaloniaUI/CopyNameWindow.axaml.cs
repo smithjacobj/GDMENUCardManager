@@ -12,7 +12,7 @@ using Avalonia.Interactivity;
 
 namespace GDMENUCardManager
 {
-    public class CopyNameWindow : Window, INotifyPropertyChanged
+    public partial class CopyNameWindow : Window, INotifyPropertyChanged
     {
         public bool OnCard { get; set; }
         public bool NotOnCard { get; set; } = true;
