@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
@@ -92,6 +93,11 @@ namespace GDMENUCardManager.Core
 
             protected override void InsertItem(int index, GdItem item)
             {
+                if (item == null)
+                {
+                    return;
+                }
+                
                 item.PropertyChanged += OnPropertyChanged;
                 base.InsertItem(index, item);
             }
@@ -104,6 +110,11 @@ namespace GDMENUCardManager.Core
 
             protected override void SetItem(int index, GdItem item)
             {
+                if (item == null)
+                {
+                    return;
+                }
+                
                 this[index].PropertyChanged -= OnPropertyChanged;
                 base.SetItem(index, item);
                 item.PropertyChanged += OnPropertyChanged;
@@ -506,7 +517,7 @@ namespace GDMENUCardManager.Core
 
             try
             {
-                // @todo: evaluate loadIP()
+                // @todo: evaluate loadIP() for understanding and refactoring
                 await LoadIpAll();
             }
             catch (ProgressWindowClosedException)
@@ -522,17 +533,17 @@ namespace GDMENUCardManager.Core
                 await Helper.CreateDirectoryAsync(tempDirectory.ToString());
             }
 
-            // Move all SD card items aside to GUID folders because it's fast - moves are just
-            // filesystem operations and there aren't too many files.
+            // Move all SD card items aside to GUID folders because it's fast - these moves are
+            // just same-filesystem operations and there aren't too many files.
             await MoveAsideAllItems();
 
             // Remove items not in the ItemList anymore, so we don't run out of space.
             await RemoveUnusedItems();
 
             // @todo: figure out progress reporting. maybe based on count on sd card vs total count
-            for (int i = 0; i < ItemList.Count; i++)
+            for (var i = 0; i < ItemList.Count; i++)
             {
-                GdItem item = ItemList[i];
+                var item = ItemList[i];
                 if (item.IsMenuItem)
                 {
                     continue;
@@ -555,6 +566,7 @@ namespace GDMENUCardManager.Core
                     }
                 }
 
+                ItemList[i] = item;
                 await WriteJson(item, item.FullFolderPath);
             }
 
