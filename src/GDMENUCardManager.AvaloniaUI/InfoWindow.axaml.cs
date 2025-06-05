@@ -39,7 +39,7 @@ namespace GDMENUCardManager
         }
 
         private GdItem item;
-        public event PropertyChangedEventHandler PropertyChanged;
+        public new event PropertyChangedEventHandler PropertyChanged;
 
         public InfoWindow() { }
 

@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace GDMENUCardManager.Core
@@ -157,6 +158,12 @@ namespace GDMENUCardManager.Core
         {
             var displayName = enumValue.GetAttribute<DisplayAttribute>()?.Name;
             return string.IsNullOrEmpty(displayName) ? enumValue.ToString() : displayName;
+        }
+        
+        private static readonly Regex SWhitespace = new(@"\s+");
+        public static string RemoveWhitespace(this string input) 
+        {
+            return SWhitespace.Replace(input, string.Empty);
         }
     }
 }

@@ -1,67 +1,58 @@
-﻿using Avalonia.Controls;
-using Avalonia.Input;
-using Avalonia.Interactivity;
-using Avalonia.Markup.Xaml;
-using MsBox.Avalonia;
-using MsBox.Avalonia.Models;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.IO;
+using System.Configuration;
+using System.Diagnostics;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Threading.Tasks;
-using GDMENUCardManager.Core;
-using System.Configuration;
-using System.Diagnostics;
-using System.Reflection.Metadata;
-using Avalonia.Data.Converters;
-using Avalonia;
-using AvaloniaEdit.Utils;
 using System.Text;
+using System.Threading.Tasks;
+using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Interactivity;
+using Avalonia.Markup.Xaml;
+using AvaloniaEdit.Utils;
+using GDMENUCardManager.Core;
+using MsBox.Avalonia;
+using MsBox.Avalonia.Models;
 using NiceIO;
 
-namespace GDMENUCardManager
+namespace GDMENUCardManager.AvaloniaUI
 {
     public partial class MainWindow : Window, INotifyPropertyChanged
     {
-        private GDMENUCardManager.Core.Manager _ManagerInstance;
+        private Manager Manager { get; }
 
-        public GDMENUCardManager.Core.Manager Manager
+        private readonly bool _showAllDrives;
+
+        public new event PropertyChangedEventHandler PropertyChanged;
+
+        private ObservableCollection<DriveInfo> DriveList { get; } = new();
+
+        private bool _isBusy;
+
+        private bool IsBusy
         {
-            get { return _ManagerInstance; }
-        }
-
-        private readonly bool showAllDrives = false;
-
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        public ObservableCollection<DriveInfo> DriveList { get; } =
-            new ObservableCollection<DriveInfo>();
-
-        private bool _IsBusy;
-
-        public bool IsBusy
-        {
-            get { return _IsBusy; }
-            private set
+            get => _isBusy;
+            set
             {
-                _IsBusy = value;
+                _isBusy = value;
                 RaisePropertyChanged();
             }
         }
 
-        private DriveInfo _DriveInfo;
+        private DriveInfo _driveInfo;
 
         public DriveInfo SelectedDrive
         {
-            get { return _DriveInfo; }
+            get => _driveInfo;
             set
             {
-                _DriveInfo = value;
+                _driveInfo = value;
                 Manager.ItemList.Clear();
                 Manager.sdPath = value?.RootDirectory.ToString();
                 Filter = null;
@@ -69,33 +60,33 @@ namespace GDMENUCardManager
             }
         }
 
-        private NPath _TempFolder;
+        private NPath _tempFolder;
 
-        public NPath TempFolder
+        private NPath TempFolder
         {
-            get => _TempFolder;
+            get => _tempFolder;
             set
             {
-                _TempFolder = value;
+                _tempFolder = value;
                 RaisePropertyChanged();
             }
         }
 
-        private string _TotalFilesLength;
+        private string _totalFilesLength;
 
         public string TotalFilesLength
         {
-            get { return _TotalFilesLength; }
+            get => _totalFilesLength;
             private set
             {
-                _TotalFilesLength = value;
+                _totalFilesLength = value;
                 RaisePropertyChanged();
             }
         }
 
         public MenuKind MenuKindSelected
         {
-            get { return Manager.MenuKindSelected; }
+            get => Manager.MenuKindSelected;
             set
             {
                 Manager.MenuKindSelected = value;
@@ -103,25 +94,19 @@ namespace GDMENUCardManager
             }
         }
 
-        private string _Filter;
+        private string _filter;
 
-        public string Filter
+        private string Filter
         {
-            get { return _Filter; }
+            get => _filter;
             set
             {
-                _Filter = value;
+                _filter = value;
                 RaisePropertyChanged();
             }
         }
 
-        private readonly List<FileDialogFilter> fileFilterList;
-
-        #region window controls
-
-        //DataGrid dg1;
-
-        #endregion
+        private readonly List<FileDialogFilter> _fileFilterList;
 
         public MainWindow()
         {
@@ -132,14 +117,14 @@ namespace GDMENUCardManager
 #endif
 
             var compressedFileFormats = new string[] { ".7z", ".rar", ".zip" };
-            _ManagerInstance = GDMENUCardManager.Core.Manager.CreateInstance(
+            Manager = GDMENUCardManager.Core.Manager.CreateInstance(
                 new DependencyManager(),
                 compressedFileFormats
             );
             var fullList = Manager.supportedImageFormats.Concat(compressedFileFormats).ToArray();
-            fileFilterList = new List<FileDialogFilter>
+            _fileFilterList = new List<FileDialogFilter>
             {
-                new FileDialogFilter
+                new()
                 {
                     Name = $"Dreamcast Game ({string.Join("; ", fullList.Select(x => $"*{x}"))})",
                     Extensions = fullList.Select(x => x.Substring(1)).ToList()
@@ -153,7 +138,7 @@ namespace GDMENUCardManager
             Manager.ItemList.CollectionChanged += ItemList_CollectionChanged;
 
             //config parsing. all settings are optional and must reverse to default values if missing
-            bool.TryParse(ConfigurationManager.AppSettings["ShowAllDrives"], out showAllDrives);
+            bool.TryParse(ConfigurationManager.AppSettings["ShowAllDrives"], out _showAllDrives);
             bool.TryParse(ConfigurationManager.AppSettings["Debug"], out Manager.debugEnabled);
             if (
                 bool.TryParse(
@@ -302,7 +287,7 @@ namespace GDMENUCardManager
 
                 try
                 {
-                    foreach (var o in e.Data.GetFileNames())
+                    foreach (var o in e.Data.GetFiles()?.Select(x => x.Name) ?? new List<string>())
                     {
                         try
                         {
@@ -512,7 +497,7 @@ namespace GDMENUCardManager
                     .Where(x =>
                         x.IsReady
                         && (
-                            showAllDrives
+                            _showAllDrives
                             || (
                                 x.DriveType == DriveType.Removable
                                 && x.DriveFormat.StartsWith("FAT")
@@ -527,7 +512,7 @@ namespace GDMENUCardManager
                     .Where(x =>
                         x.IsReady
                         && (
-                            showAllDrives
+                            _showAllDrives
                             || x.DriveType == DriveType.Removable
                             || x.DriveType == DriveType.Fixed
                             || (
@@ -546,7 +531,7 @@ namespace GDMENUCardManager
                     .Where(x =>
                         x.IsReady
                         && (
-                            showAllDrives
+                            _showAllDrives
                             || (
                                 (
                                     x.DriveType == DriveType.Removable
@@ -682,7 +667,7 @@ namespace GDMENUCardManager
         {
             TextInfo textInfo = new CultureInfo("en-US", false).TextInfo;
 
-            IEnumerable<GdItem> items = dg1.SelectedItems.Cast<GdItem>();
+            IEnumerable<GdItem> items = Enumerable.Cast<GdItem>(dg1.SelectedItems);
 
             foreach (var item in items)
             {
@@ -710,7 +695,7 @@ namespace GDMENUCardManager
             IsBusy = true;
             try
             {
-                await Manager.RenameItems(dg1.SelectedItems.Cast<GdItem>(), renameBy);
+                await Manager.RenameItems(Enumerable.Cast<GdItem>(dg1.SelectedItems), renameBy);
             }
             catch (Exception ex)
             {
@@ -810,7 +795,7 @@ namespace GDMENUCardManager
             {
                 Title = "Select File(s)",
                 AllowMultiple = true,
-                Filters = fileFilterList
+                Filters = _fileFilterList
             };
 
             var files = await fileDialog.ShowAsync(this);
@@ -836,13 +821,13 @@ namespace GDMENUCardManager
         private void ButtonRemoveGame_Click(object sender, RoutedEventArgs e)
         {
             //todo prevent not remove gdmenu!
-            foreach (var item in dg1.SelectedItems.Cast<GdItem>().ToArray())
+            foreach (var item in Enumerable.Cast<GdItem>(dg1.SelectedItems).ToArray())
                 Manager.ItemList.Remove(item);
         }
 
         private void ButtonMoveUp_Click(object sender, RoutedEventArgs e)
         {
-            var selectedItems = dg1.SelectedItems.Cast<GdItem>().ToArray();
+            var selectedItems = Enumerable.Cast<GdItem>(dg1.SelectedItems).ToArray();
 
             if (!selectedItems.Any())
                 return;
@@ -865,7 +850,7 @@ namespace GDMENUCardManager
 
         private void ButtonMoveDown_Click(object sender, RoutedEventArgs e)
         {
-            var selectedItems = dg1.SelectedItems.Cast<GdItem>().ToArray();
+            var selectedItems = Enumerable.Cast<GdItem>(dg1.SelectedItems).ToArray();
 
             if (!selectedItems.Any())
                 return;

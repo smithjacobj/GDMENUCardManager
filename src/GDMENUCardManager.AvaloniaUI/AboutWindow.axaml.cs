@@ -59,7 +59,7 @@ namespace GDMENUCardManager
         private readonly Queue<Key> lastKeys = new Queue<Key>(10);
         private readonly Key[] konamiCodeKeys = new Key[] { Key.Up, Key.Up, Key.Down, Key.Down, Key.Left, Key.Right, Key.Left, Key.Right, Key.B, Key.A };
 
-        public event PropertyChangedEventHandler PropertyChanged;
+        public new event PropertyChangedEventHandler PropertyChanged;
 
 
         public AboutWindow()

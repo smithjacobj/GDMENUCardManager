@@ -45,7 +45,7 @@ namespace GDMENUCardManager
             set { _TextContent = value; RaisePropertyChanged(); }
         }
 
-        public event PropertyChangedEventHandler PropertyChanged;
+        public new event PropertyChangedEventHandler PropertyChanged;
 
         public ProgressWindow()
         {

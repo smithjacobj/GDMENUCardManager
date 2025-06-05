@@ -317,7 +317,7 @@ namespace GDMENUCardManager.Core
                 item.SdNumber = number;
 
             if (item.Location != LocationEnum.SdCard)
-                item.SourcePath = new NPath(sourceFilePath).Parent.ToString();
+                item.SourcePath = new NPath(sourceFilePath).ToString();
 
             return item;
         }

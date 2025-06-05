@@ -86,7 +86,7 @@ namespace GDMENUCardManager.Core
 
         public class GdItemList : ObservableCollection<GdItem>
         {
-            protected override event PropertyChangedEventHandler PropertyChanged;
+            protected override event PropertyChangedEventHandler? PropertyChanged;
 
             protected virtual void OnPropertyChanged(object? sender, PropertyChangedEventArgs e)
             {
@@ -124,11 +124,9 @@ namespace GDMENUCardManager.Core
         )
         {
             Helper.DependencyManager = m;
-            Helper.CompressedFileExpression = new Func<string, bool>(
-                x =>
-                    compressedFileExtensions.Any(
-                        y => x.EndsWith(y, StringComparison.InvariantCultureIgnoreCase)
-                    )
+            Helper.CompressedFileExpression = new Func<string, bool>(x =>
+                compressedFileExtensions.Any(y => x.EndsWith(y, StringComparison.InvariantCultureIgnoreCase)
+                )
             );
 
             return new Manager();
@@ -249,6 +247,7 @@ namespace GDMENUCardManager.Core
                     if (!progress.IsVisible) //user closed window
                         throw new ProgressWindowClosedException();
                 }
+
                 await Task.Delay(100);
             }
             finally
@@ -313,6 +312,7 @@ namespace GDMENUCardManager.Core
                     if (m.Success)
                         name = name.Substring(0, m.Index);
                 }
+
                 item.Name = name;
             }
         }
@@ -355,6 +355,7 @@ namespace GDMENUCardManager.Core
                 item.Name = name;
                 count++;
             }
+
             return count;
         }
 
@@ -362,10 +363,9 @@ namespace GDMENUCardManager.Core
         {
             var files = await Helper.GetFilesAsync(folderPath);
 
-            var jsonFile = files.FirstOrDefault(
-                x =>
-                    Path.GetFileName(x)
-                        .Equals(Constants.JsonGdItemFile, StringComparison.OrdinalIgnoreCase)
+            var jsonFile = files.FirstOrDefault(x =>
+                Path.GetFileName(x)
+                    .Equals(Constants.JsonGdItemFile, StringComparison.OrdinalIgnoreCase)
             );
             if (jsonFile == null)
             {
@@ -399,10 +399,9 @@ namespace GDMENUCardManager.Core
                 }
 
                 var itemName = string.Empty;
-                var nameFile = files.FirstOrDefault(
-                    x =>
-                        Path.GetFileName(x)
-                            .Equals(Constants.NameTextFile, StringComparison.OrdinalIgnoreCase)
+                var nameFile = files.FirstOrDefault(x =>
+                    Path.GetFileName(x)
+                        .Equals(Constants.NameTextFile, StringComparison.OrdinalIgnoreCase)
                 );
                 if (nameFile != null)
                     itemName = await Helper.ReadAllTextAsync(nameFile);
@@ -412,10 +411,9 @@ namespace GDMENUCardManager.Core
                     return null;
 
                 var itemSerial = string.Empty;
-                var serialFile = files.FirstOrDefault(
-                    x =>
-                        Path.GetFileName(x)
-                            .Equals(Constants.SerialTextFile, StringComparison.OrdinalIgnoreCase)
+                var serialFile = files.FirstOrDefault(x =>
+                    Path.GetFileName(x)
+                        .Equals(Constants.SerialTextFile, StringComparison.OrdinalIgnoreCase)
                 );
                 if (serialFile != null)
                     itemSerial = await Helper.ReadAllTextAsync(serialFile);
@@ -449,12 +447,11 @@ namespace GDMENUCardManager.Core
                 foreach (var file in files)
                 {
                     if (
-                        supportedImageFormats.Any(
-                            x =>
-                                x.Equals(
-                                    Path.GetExtension(file),
-                                    StringComparison.OrdinalIgnoreCase
-                                )
+                        supportedImageFormats.Any(x =>
+                            x.Equals(
+                                Path.GetExtension(file),
+                                StringComparison.OrdinalIgnoreCase
+                            )
                         )
                     )
                     {
@@ -538,7 +535,7 @@ namespace GDMENUCardManager.Core
                 {
                     continue;
                 }
-                
+
                 item.SdNumber -= sdNumberOffset;
 
                 try
@@ -560,7 +557,7 @@ namespace GDMENUCardManager.Core
                         throw;
                     }
 
-                    sdNumberOffset--;
+                    sdNumberOffset++;
                 }
 
                 ItemList[i] = item;
@@ -779,9 +776,11 @@ namespace GDMENUCardManager.Core
                 {
                     throw new InvalidDataException("Serial not set, required for openMenu");
                 }
+
                 var productid = serial?.Replace("-", "").Split(' ')[0];
                 sb.AppendLine($"{strnumber}.product={productid}");
             }
+
             sb.AppendLine();
         }
 
@@ -815,7 +814,7 @@ namespace GDMENUCardManager.Core
             {
                 throw new InvalidDataException("sdPath not set");
             }
-            
+
             var newPath = Path.Combine(sdPath, FormatFolderNumber(folderNumber));
             if (item.Work == WorkMode.Move)
             {
@@ -845,12 +844,11 @@ namespace GDMENUCardManager.Core
                     foreach (var f in item.ImageFiles)
                     {
                         //todo async!
-                        await Task.Run(
-                            () =>
-                                File.Copy(
-                                    Path.Combine(item.FullFolderPath, f),
-                                    Path.Combine(newPath, f)
-                                )
+                        await Task.Run(() =>
+                            File.Copy(
+                                Path.Combine(item.FullFolderPath, f),
+                                Path.Combine(newPath, f)
+                            )
                         );
                     }
                 }
@@ -867,6 +865,7 @@ namespace GDMENUCardManager.Core
                 item.ImageFiles.AddRange(gdi.ImageFiles);
                 UpdateItemLength(item);
             }
+
             item.Work = WorkMode.None;
         }
 
@@ -900,7 +899,9 @@ namespace GDMENUCardManager.Core
                 var hashPath = new NPath(item.SourcePath);
                 var pathHash = sha1.ComputeHash(Encoding.UTF8.GetBytes(hashPath.ToString()));
 
-                var extractDir = tempdir.Combine($"ext_{Convert.ToHexString(pathHash)}");
+                var extractDir =
+                    tempdir.Combine(
+                        $"ext_{new NPath(item.SourcePath).FileNameWithoutExtension.RemoveWhitespace()}_{Convert.ToHexString(pathHash)}");
                 NPath? outputPath = null;
 
                 try
@@ -915,12 +916,11 @@ namespace GDMENUCardManager.Core
                     if (!await extractDir.DirectoryExistsAsync())
                     {
                         await extractDir.CreateDirectoryAsync();
-                        await Task.Run(
-                            () =>
-                                Helper.DependencyManager.ExtractArchive(
-                                    item.SourcePath,
-                                    extractDir.ToString()
-                                )
+                        await Task.Run(() =>
+                            Helper.DependencyManager.ExtractArchive(
+                                item.SourcePath,
+                                extractDir.ToString()
+                            )
                         );
                     }
 
@@ -931,10 +931,9 @@ namespace GDMENUCardManager.Core
                     }
 
                     newItem.SdNumber = item.SdNumber;
-                    newItem.SourcePath = hashPath.ToString();
                     newItem.FullFolderPath = extractDir.ToString();
                     item = newItem;
-                    
+
                     await EnsureMetaTextFiles(item, extractDir);
                     outputPath = await CopyItemToSdCard(item);
                 }
@@ -947,6 +946,7 @@ namespace GDMENUCardManager.Core
                     {
                         await extractDir.WriteErrorFileAsync(ex.Message);
                     }
+
                     if (outputPath != null && await outputPath.DirectoryExistsAsync())
                     {
                         await outputPath.WriteErrorFileAsync(ex.Message);
@@ -955,6 +955,7 @@ namespace GDMENUCardManager.Core
                     throw;
                 }
             }
+
             return item;
         }
 
@@ -966,13 +967,14 @@ namespace GDMENUCardManager.Core
                 path.Combine(Constants.NameTextFile).WriteAllText(item.Name);
             });
         }
-        
+
         private async Task<NPath> CopyItemToSdCard(GdItem item)
         {
             var sourceFolder = new NPath(item.FullFolderPath);
             if (!await sourceFolder.DirectoryExistsAsync())
             {
-                throw new InvalidDataException("SourcePath must point to uncompressed game data folder for CopyItemToSdCard");
+                throw new InvalidDataException(
+                    "FullFolderPath must point to uncompressed game data folder for CopyItemToSdCard");
             }
 
             var itemSdPath = new NPath(sdPath).Combine(FormatFolderNumber(item.SdNumber));
@@ -1060,7 +1062,7 @@ namespace GDMENUCardManager.Core
         public async Task<List<string>> AddGames(string[] files)
         {
             var invalid = new List<string>();
-            
+
             foreach (var filePath in files)
             {
                 try
@@ -1074,7 +1076,7 @@ namespace GDMENUCardManager.Core
                     invalid.Add(filePath);
                 }
             }
-            
+
             return invalid;
         }
 
@@ -1115,6 +1117,7 @@ namespace GDMENUCardManager.Core
                 {
                     continue;
                 }
+
                 item.SdNumber = i;
                 i++;
             }
@@ -1124,7 +1127,8 @@ namespace GDMENUCardManager.Core
         {
             var _sdPath = new NPath(sdPath);
 
-            var activeFolderNames = ItemList.Select(x => x.IsMenuItem ? FormatFolderNumber(x.SdNumber) : x.Guid).ToHashSet();
+            var activeFolderNames = ItemList.Select(x => x.IsMenuItem ? FormatFolderNumber(x.SdNumber) : x.Guid)
+                .ToHashSet();
             var folders = await _sdPath.GetDirectoriesAsync();
 
             var unusedFolders = folders.Where(x => !activeFolderNames.Contains(x.FileName.ToString()));
@@ -1147,7 +1151,7 @@ namespace GDMENUCardManager.Core
                 var asidePath = itemPath.Parent.Combine(item.Guid);
 
                 if (await itemPath.DirectoryExistsAsync())
-                // This can happen if an operation causes items to be moved aside and never restored
+                    // This can happen if an operation causes items to be moved aside and never restored
                 {
                     await itemPath.MoveDirectoryAsync(asidePath);
                 }
@@ -1179,5 +1183,7 @@ namespace GDMENUCardManager.Core
         }
     }
 
-    public class ProgressWindowClosedException : Exception { }
+    public class ProgressWindowClosedException : Exception
+    {
+    }
 }
