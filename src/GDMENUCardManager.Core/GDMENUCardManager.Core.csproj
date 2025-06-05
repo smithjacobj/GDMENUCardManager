@@ -12,6 +12,10 @@
   <PropertyGroup Condition="'$(Configuration)'=='Release'">
     <DebugType>none</DebugType>
     <DebugSymbols>false</DebugSymbols>
+    <DefineConstants>TRACE,NICEIO_PUBLIC</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <DefineConstants>TRACE,NICEIO_PUBLIC</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="ByteSize" Version="2.0.0" />

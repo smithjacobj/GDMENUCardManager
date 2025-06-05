@@ -16,16 +16,20 @@ using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using GDMENUCardManager.Core;
 using System.Configuration;
+using System.Diagnostics;
+using System.Reflection.Metadata;
 using Avalonia.Data.Converters;
 using Avalonia;
 using AvaloniaEdit.Utils;
 using System.Text;
+using NiceIO;
 
 namespace GDMENUCardManager
 {
     public partial class MainWindow : Window, INotifyPropertyChanged
     {
         private GDMENUCardManager.Core.Manager _ManagerInstance;
+
         public GDMENUCardManager.Core.Manager Manager
         {
             get { return _ManagerInstance; }
@@ -39,6 +43,7 @@ namespace GDMENUCardManager
             new ObservableCollection<DriveInfo>();
 
         private bool _IsBusy;
+
         public bool IsBusy
         {
             get { return _IsBusy; }
@@ -50,6 +55,7 @@ namespace GDMENUCardManager
         }
 
         private DriveInfo _DriveInfo;
+
         public DriveInfo SelectedDrive
         {
             get { return _DriveInfo; }
@@ -63,10 +69,11 @@ namespace GDMENUCardManager
             }
         }
 
-        private string _TempFolder;
-        public string TempFolder
+        private NPath _TempFolder;
+
+        public NPath TempFolder
         {
-            get { return _TempFolder; }
+            get => _TempFolder;
             set
             {
                 _TempFolder = value;
@@ -75,6 +82,7 @@ namespace GDMENUCardManager
         }
 
         private string _TotalFilesLength;
+
         public string TotalFilesLength
         {
             get { return _TotalFilesLength; }
@@ -96,6 +104,7 @@ namespace GDMENUCardManager
         }
 
         private string _Filter;
+
         public string Filter
         {
             get { return _Filter; }
@@ -109,7 +118,9 @@ namespace GDMENUCardManager
         private readonly List<FileDialogFilter> fileFilterList;
 
         #region window controls
+
         //DataGrid dg1;
+
         #endregion
 
         public MainWindow()
@@ -135,10 +146,7 @@ namespace GDMENUCardManager
                 }
             };
 
-            this.Opened += (ss, ee) =>
-            {
-                FillDriveList();
-            };
+            this.Opened += (ss, ee) => { FillDriveList(); };
 
             this.Closing += MainWindow_Closing;
             this.PropertyChanged += MainWindow_PropertyChanged;
@@ -244,7 +252,7 @@ namespace GDMENUCardManager
             IsBusy = true;
             try
             {
-                if (await Manager.Save(TempFolder))
+                if (await Manager.Save(TempFolder.ToString()))
                 {
                     if (Manager.ItemList.Any(x => x.HasError))
                     {
@@ -315,7 +323,9 @@ namespace GDMENUCardManager
                             )
                             .ShowWindowDialogAsync(this);
                 }
-                catch (Exception) { }
+                catch (Exception)
+                {
+                }
                 finally
                 {
                     IsBusy = false;
@@ -346,6 +356,7 @@ namespace GDMENUCardManager
                     )
                     .ShowWindowDialogAsync(this);
             }
+
             await new AboutWindow().ShowDialog(this);
             IsBusy = false;
         }
@@ -354,12 +365,21 @@ namespace GDMENUCardManager
         {
             var folderDialog = new OpenFolderDialog { Title = "Select Temporary Folder" };
 
-            if (!string.IsNullOrEmpty(TempFolder))
-                folderDialog.Directory = TempFolder;
+            if (await TempFolder.DirectoryExistsAsync())
+                folderDialog.Directory = TempFolder.ToString();
 
             var selectedFolder = await folderDialog.ShowAsync(this);
             if (!string.IsNullOrEmpty(selectedFolder))
                 TempFolder = selectedFolder;
+        }
+
+        private void ButtonExplorer_Click(object sender, RoutedEventArgs e)
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                UseShellExecute = true,
+                FileName = TempFolder.Combine("GDMenuCardManager").ToString(SlashMode.Native)
+            });
         }
 
         private async void ButtonInfo_Click(object sender, RoutedEventArgs e)
@@ -385,6 +405,7 @@ namespace GDMENUCardManager
                     )
                     .ShowWindowDialogAsync(this);
             }
+
             IsBusy = false;
         }
 
@@ -405,6 +426,7 @@ namespace GDMENUCardManager
                     )
                     .ShowWindowDialogAsync(this);
             }
+
             IsBusy = false;
         }
 
@@ -457,7 +479,9 @@ namespace GDMENUCardManager
             {
                 await Manager.LoadIpAll();
             }
-            catch (ProgressWindowClosedException) { }
+            catch (ProgressWindowClosedException)
+            {
+            }
             catch (Exception ex)
             {
                 await MessageBoxManager
@@ -485,68 +509,65 @@ namespace GDMENUCardManager
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 list = DriveInfo
                     .GetDrives()
-                    .Where(
-                        x =>
-                            x.IsReady
-                            && (
-                                showAllDrives
-                                || (
-                                    x.DriveType == DriveType.Removable
-                                    && x.DriveFormat.StartsWith("FAT")
-                                )
+                    .Where(x =>
+                        x.IsReady
+                        && (
+                            showAllDrives
+                            || (
+                                x.DriveType == DriveType.Removable
+                                && x.DriveFormat.StartsWith("FAT")
                             )
+                        )
                     )
                     .ToArray();
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
                 //list = DriveInfo.GetDrives().Where(x => x.IsReady && (showAllDrives || x.DriveType == DriveType.Removable || x.DriveType == DriveType.Fixed)).ToArray();//todo need to test
                 list = DriveInfo
                     .GetDrives()
-                    .Where(
-                        x =>
-                            x.IsReady
-                            && (
-                                showAllDrives
-                                || x.DriveType == DriveType.Removable
-                                || x.DriveType == DriveType.Fixed
-                                || (
-                                    x.DriveType == DriveType.Unknown
-                                    && x.DriveFormat.Equals(
-                                        "lifs",
-                                        StringComparison.InvariantCultureIgnoreCase
-                                    )
+                    .Where(x =>
+                        x.IsReady
+                        && (
+                            showAllDrives
+                            || x.DriveType == DriveType.Removable
+                            || x.DriveType == DriveType.Fixed
+                            || (
+                                x.DriveType == DriveType.Unknown
+                                && x.DriveFormat.Equals(
+                                    "lifs",
+                                    StringComparison.InvariantCultureIgnoreCase
                                 )
                             )
+                        )
                     )
                     .ToArray(); //todo need to test
             else //linux
                 list = DriveInfo
                     .GetDrives()
-                    .Where(
-                        x =>
-                            x.IsReady
-                            && (
-                                showAllDrives
-                                || (
-                                    (
-                                        x.DriveType == DriveType.Removable
-                                        || x.DriveType == DriveType.Fixed
-                                    )
-                                    && x.DriveFormat.Equals(
-                                        "msdos",
+                    .Where(x =>
+                        x.IsReady
+                        && (
+                            showAllDrives
+                            || (
+                                (
+                                    x.DriveType == DriveType.Removable
+                                    || x.DriveType == DriveType.Fixed
+                                )
+                                && x.DriveFormat.Equals(
+                                    "msdos",
+                                    StringComparison.InvariantCultureIgnoreCase
+                                )
+                                && (
+                                    x.Name.StartsWith(
+                                        "/media/",
                                         StringComparison.InvariantCultureIgnoreCase
                                     )
-                                    && (
-                                        x.Name.StartsWith(
-                                            "/media/",
-                                            StringComparison.InvariantCultureIgnoreCase
-                                        )
-                                        || x.Name.StartsWith(
-                                            "/run/media/",
-                                            StringComparison.InvariantCultureIgnoreCase
-                                        )
+                                    || x.Name.StartsWith(
+                                        "/run/media/",
+                                        StringComparison.InvariantCultureIgnoreCase
                                     )
                                 )
                             )
+                        )
                     )
                     .ToArray();
 
@@ -557,6 +578,7 @@ namespace GDMENUCardManager
 
                 DriveList.Clear();
             }
+
             //fill drive list and try to find drive with gdemu contents
             //look for GDEMU.ini file
             foreach (DriveInfo drive in list)
@@ -572,7 +594,9 @@ namespace GDMENUCardManager
                     )
                         SelectedDrive = drive;
                 }
-                catch { }
+                catch
+                {
+                }
             }
 
             //look for 01 folder
@@ -588,7 +612,9 @@ namespace GDMENUCardManager
                             break;
                         }
                     }
-                    catch { }
+                    catch
+                    {
+                    }
                 }
             }
 
@@ -610,7 +636,9 @@ namespace GDMENUCardManager
                             break;
                         }
                     }
-                    catch { }
+                    catch
+                    {
+                    }
                 }
             }
 
@@ -639,10 +667,10 @@ namespace GDMENUCardManager
                 ShowInCenter = true,
                 WindowStartupLocation = WindowStartupLocation.CenterOwner,
                 ButtonDefinitions = new ButtonDefinition[]
-                        {
-                            new ButtonDefinition { Name = "Ok" },
-                            new ButtonDefinition { Name = "Cancel" }
-                        }
+                {
+                    new ButtonDefinition { Name = "Ok" },
+                    new ButtonDefinition { Name = "Cancel" }
+                }
             });
             var result = await msBox.ShowWindowDialogAsync(this);
 
@@ -694,6 +722,7 @@ namespace GDMENUCardManager
                     )
                     .ShowWindowDialogAsync(this);
             }
+
             IsBusy = false;
         }
 
@@ -757,7 +786,9 @@ namespace GDMENUCardManager
                             await Manager.LoadIP(item);
                             IsBusy = false;
                         }
-                        if (item.Ip.Name != "GDMENU" && item.Ip.Name != "openMenu") //dont let the user exclude GDMENU, openMenu
+
+                        if (item.Ip.Name != "GDMENU" &&
+                            item.Ip.Name != "openMenu") //dont let the user exclude GDMENU, openMenu
                             toRemove.Add(item);
                     }
                     else
@@ -866,7 +897,9 @@ namespace GDMENUCardManager
                 await Manager.LoadIpAll();
                 IsBusy = false;
             }
-            catch (ProgressWindowClosedException) { }
+            catch (ProgressWindowClosedException)
+            {
+            }
 
             if (dg1.SelectedIndex == -1 || !searchInGrid(dg1.SelectedIndex))
                 searchInGrid(0);
@@ -884,6 +917,7 @@ namespace GDMENUCardManager
                     return true;
                 }
             }
+
             return false;
         }
 
@@ -925,21 +959,21 @@ namespace GDMENUCardManager
             var comparer = new GdItem.ImportComparer();
             var newItems = exportFile
                 .ItemList
-                .Where(
-                    x =>
-                        !Manager.ItemList.Any(
-                            y =>
-                                comparer.GetHashCode(x) == comparer.GetHashCode(y)
-                                && comparer.Equals(x, y)
-                        )
+                .Where(x =>
+                    !Manager.ItemList.Any(y =>
+                        comparer.GetHashCode(x) == comparer.GetHashCode(y)
+                        && comparer.Equals(x, y)
+                    )
                 );
             Manager.ItemList.AddRange(newItems);
         }
 
-        private async void ButtonErrorReport_Click(object sender, RoutedEventArgs eventArgs) {
+        private async void ButtonErrorReport_Click(object sender, RoutedEventArgs eventArgs)
+        {
             var saveDialog = new SaveFileDialog
             {
-                Filters = {
+                Filters =
+                {
                     new FileDialogFilter { Name = "Text File", Extensions = { "txt" } }
                 }
             };
@@ -959,6 +993,8 @@ namespace GDMENUCardManager
             }
         }
 
-        private async void ButtonRemoveErrors_Click(object sender, RoutedEventArgs eventArgs) { }
+        private async void ButtonRemoveErrors_Click(object sender, RoutedEventArgs eventArgs)
+        {
+        }
     }
 }

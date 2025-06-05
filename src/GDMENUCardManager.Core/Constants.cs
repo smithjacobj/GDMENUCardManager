@@ -13,5 +13,6 @@
         public const string DefaultImageFileName = "disc";
         public const string Version = "v2.0.1";
         public static readonly string k_UnknownDiscNumber = "?/?";
+        public static readonly string TempFolderName = "GDMenuCardManager";
     }
 }

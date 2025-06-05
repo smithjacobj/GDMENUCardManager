@@ -104,14 +104,14 @@ namespace GDMENUCardManager.Core
         private string _ProductNumber;
         public string ProductNumber
         {
-            get { return _ProductNumber; }
+            get => _ProductNumber ??= Ip.ProductNumber[..serialmaxlen];
             set
             {
                 _ProductNumber = value;
                 if (_ProductNumber != null)
                 {
                     if (_ProductNumber.Length > serialmaxlen)
-                        _ProductNumber = _ProductNumber.Substring(0, serialmaxlen);
+                        _ProductNumber = _ProductNumber[..serialmaxlen];
                 }
 
                 OnPropertyChanged();
