@@ -1,11 +1,8 @@
 ﻿using Avalonia.Controls;
 using MsBox.Avalonia;
 using MsBox.Avalonia.Enums;
-using System;
 using System.Collections.Generic;
 using System.IO;
-using System.IO.Compression;
-using System.Linq;
 using System.Threading.Tasks;
 using GDMENUCardManager.Core;
 using GDMENUCardManager.Core.Interface;

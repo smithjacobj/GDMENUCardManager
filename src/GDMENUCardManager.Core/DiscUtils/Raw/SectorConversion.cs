@@ -2,9 +2,6 @@
  * Sector conversion code borrowed from bizhawk: http://code.google.com/p/bizhawk/
  * */
 using System;
-using System.Linq;
-using System.Text;
-using System.Collections.Generic;
 
 namespace DiscUtils.Raw
 {

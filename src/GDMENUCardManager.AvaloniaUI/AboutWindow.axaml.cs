@@ -2,21 +2,11 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
-using MsBox.Avalonia;
-using MsBox.Avalonia.Enums;
-using MsBox.Avalonia.Models;
-using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using GDMENUCardManager.Core.Interface;
 using GDMENUCardManager.Core;
 using System.Threading;
 using System.Net.Http;
@@ -24,7 +14,6 @@ using System.Net;
 using System.Text.Json;
 using System.Runtime.InteropServices;
 using Avalonia.Input;
-using Avalonia.Platform;
 using Avalonia.Media;
 
 namespace GDMENUCardManager

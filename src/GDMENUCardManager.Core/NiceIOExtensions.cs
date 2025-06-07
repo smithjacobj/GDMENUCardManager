@@ -35,9 +35,9 @@ public static class NiceIOExtensions
         return Task.Run(() => path.Delete());
     }
 
-    public static Task<bool> DirectoryExistsAsync(this NPath path)
+    public static Task<bool> DirectoryExistsAsync(this NPath? path)
     {
-        return Task.Run(() => path.DirectoryExists());
+        return Task.Run(() => path?.DirectoryExists() ?? false);
     }
 
     public static Task MoveFileAsync(this NPath from, NPath to)
@@ -50,9 +50,9 @@ public static class NiceIOExtensions
         return Task.Run(() => path.Delete());
     }
 
-    public static Task<bool> FileExistsAsync(this NPath path)
+    public static Task<bool> FileExistsAsync(this NPath? path)
     {
-        return Task.Run(() => path.FileExists());
+        return Task.Run(() => path?.FileExists() ?? false);
     }
 
     public static Task<FileAttributes> GetAttributesAsync(this NPath path)

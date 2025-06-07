@@ -34,12 +34,9 @@ using System.IO;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.Serialization;
-using static NiceIO.NPath;
 using FILETIME = System.Runtime.InteropServices.ComTypes.FILETIME;
 
 //Lets make it hard to accidentally use System.IO.File & System.IO.Directly, and require that it is always completely spelled out.
-using File = NiceIO.Do_Not_Use_File_Directly_Use_FileSystem_Active_Instead;
-using Directory = NiceIO.Do_Not_Use_Directory_Directly_Use_FileSystem_Active_Instead;
 
 namespace NiceIO
 {

@@ -54,7 +54,7 @@ namespace GDMENUCardManager.AvaloniaUI
             {
                 _driveInfo = value;
                 Manager.ItemList.Clear();
-                Manager.sdPath = value?.RootDirectory.ToString();
+                Manager.SdPath = value?.RootDirectory.ToString();
                 Filter = null;
                 RaisePropertyChanged();
             }
@@ -121,7 +121,7 @@ namespace GDMENUCardManager.AvaloniaUI
                 new DependencyManager(),
                 compressedFileFormats
             );
-            var fullList = Manager.supportedImageFormats.Concat(compressedFileFormats).ToArray();
+            var fullList = Manager.SupportedImageFormats.Concat(compressedFileFormats).ToArray();
             _fileFilterList = new List<FileDialogFilter>
             {
                 new()
@@ -139,7 +139,7 @@ namespace GDMENUCardManager.AvaloniaUI
 
             //config parsing. all settings are optional and must reverse to default values if missing
             bool.TryParse(ConfigurationManager.AppSettings["ShowAllDrives"], out _showAllDrives);
-            bool.TryParse(ConfigurationManager.AppSettings["Debug"], out Manager.debugEnabled);
+            bool.TryParse(ConfigurationManager.AppSettings["Debug"], out Manager.DebugEnabled);
             if (
                 bool.TryParse(
                     ConfigurationManager.AppSettings["UseBinaryString"],
@@ -148,14 +148,14 @@ namespace GDMENUCardManager.AvaloniaUI
             )
                 Converter.ByteSizeToStringConverter.UseBinaryString = useBinaryString;
             if (int.TryParse(ConfigurationManager.AppSettings["CharLimit"], out int charLimit))
-                GdItem.namemaxlen = Math.Min(255, Math.Max(charLimit, 1));
+                GdItem.Namemaxlen = Math.Min(255, Math.Max(charLimit, 1));
             if (
                 bool.TryParse(
                     ConfigurationManager.AppSettings["TruncateMenuGDI"],
                     out bool truncateMenuGDI
                 )
             )
-                Manager.TruncateMenuGDI = truncateMenuGDI;
+                Manager.TruncateMenuGdi = truncateMenuGDI;
 
             TempFolder = Path.GetTempPath();
             Title = "GD MENU Card Manager " + Constants.Version;
@@ -277,7 +277,7 @@ namespace GDMENUCardManager.AvaloniaUI
 
         private async void WindowDrop(object sender, DragEventArgs e)
         {
-            if (Manager.sdPath == null)
+            if (Manager.SdPath == null)
                 return;
 
             if (e.Data.Contains(DataFormats.FileNames))
@@ -326,7 +326,7 @@ namespace GDMENUCardManager.AvaloniaUI
         private async void ButtonAbout_Click(object sender, RoutedEventArgs e)
         {
             IsBusy = true;
-            if (Manager.debugEnabled)
+            if (Manager.DebugEnabled)
             {
                 var list = DriveInfo
                     .GetDrives()
@@ -376,7 +376,7 @@ namespace GDMENUCardManager.AvaloniaUI
                 var item = (GdItem)btn.CommandParameter;
 
                 if (item.Ip == null)
-                    await Manager.LoadIP(item);
+                    await Manager.LoadIp(item);
 
                 await new InfoWindow(item).ShowDialog(this);
             }
@@ -768,7 +768,7 @@ namespace GDMENUCardManager.AvaloniaUI
                         if (item.Ip == null)
                         {
                             IsBusy = true;
-                            await Manager.LoadIP(item);
+                            await Manager.LoadIp(item);
                             IsBusy = false;
                         }
 

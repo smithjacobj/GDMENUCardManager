@@ -33,7 +33,6 @@
 using System;
 using System.Collections.Generic;
 using Aaru.CommonTypes;
-using Aaru.CommonTypes.Enums;
 using Aaru.CommonTypes.Structs;
 //using Schemas;
 

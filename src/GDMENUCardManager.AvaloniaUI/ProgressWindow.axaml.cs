@@ -1,21 +1,7 @@
-﻿using Avalonia;
-using Avalonia.Controls;
-using Avalonia.Interactivity;
+﻿using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
-using MsBox.Avalonia;
-using MsBox.Avalonia.Enums;
-using MsBox.Avalonia.Models;
-using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using GDMENUCardManager.Core.Interface;
 
 namespace GDMENUCardManager

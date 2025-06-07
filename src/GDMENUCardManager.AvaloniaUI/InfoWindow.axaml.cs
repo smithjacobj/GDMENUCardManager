@@ -41,8 +41,6 @@ namespace GDMENUCardManager
         private GdItem item;
         public new event PropertyChangedEventHandler PropertyChanged;
 
-        public InfoWindow() { }
-
         public InfoWindow(GdItem item)
         {
             InitializeComponent();
@@ -66,10 +64,10 @@ namespace GDMENUCardManager
             else
             {
                 sb.AppendLine("Folder:");
-                sb.AppendLine(Path.GetFileName(item.FullFolderPath));
+                sb.AppendLine(item.FullFolderPath.FileName);
                 sb.AppendLine();
                 sb.AppendLine("File:");
-                sb.AppendLine(Path.GetFileName(item.ImageFile));
+                sb.AppendLine(item.ImageFile?.FileName ?? "[Unknown]");
             }
 
             FileInfo = sb.ToString();
@@ -84,7 +82,7 @@ namespace GDMENUCardManager
                 sb.AppendLine(item.Ip.Name);
                 sb.AppendLine();
                 sb.AppendLine($"{item.Ip.Version}   DISC {item.Ip.Disc}{vga}");
-                sb.AppendLine($"CRC: {item.Ip.CRC}   Product: {item.Ip.ProductNumber}");
+                sb.AppendLine($"CRC: {item.Ip.Crc}   Product: {item.Ip.ProductNumber}");
 
                 if (item.Ip.SpecialDisc != SpecialDisc.None)
                 {
@@ -126,9 +124,9 @@ namespace GDMENUCardManager
                 if (item.FileFormat == FileFormat.SevenZip)
                     throw new Exception("Can't load from compressed files.");
 
-                var filePath = Path.Combine(item.FullFolderPath, item.ImageFile);
+                var filePath = item.FullFolderPath.Combine(item.ImageFile);
 
-                var gdtexture = await Task.Run(() => ImageHelper.GetGdText(filePath));
+                var gdtexture = await Task.Run(() => ImageHelper.GetGdText(filePath.ToString()));
 
                 if (gdtexture == null)
                 {

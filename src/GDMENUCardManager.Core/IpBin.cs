@@ -1,103 +1,104 @@
-﻿using System.ComponentModel;
+﻿#nullable enable
+using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
 namespace GDMENUCardManager.Core
 {
     public sealed class IpBin : INotifyPropertyChanged
     {
-        private string disc;
-        private string region;
-        private bool vga;
-        private string version;
-        private string releaseDate;
-        private string name;
-        private string cRC;
-        private string productNumber;
-        private SpecialDisc specialDisc;
+        private string? _disc;
+        private string? _region;
+        private bool _vga;
+        private string? _version;
+        private string? _releaseDate;
+        private string? _name;
+        private string? _crc;
+        private string? _productNumber;
+        private SpecialDisc? _specialDisc;
 
-        public string Disc
+        public string? Disc
         {
-            get => disc;
+            get => _disc;
             set
             {
-                disc = value;
+                _disc = value;
                 RaisePropertyChanged();
             }
         }
-        public string Region
+        public string? Region
         {
-            get => region;
+            get => _region;
             set
             {
-                region = value;
+                _region = value;
                 RaisePropertyChanged();
             }
         }
         public bool Vga
         {
-            get => vga;
+            get => _vga;
             set
             {
-                vga = value;
+                _vga = value;
                 RaisePropertyChanged();
             }
         }
-        public string Version
+        public string? Version
         {
-            get => version;
+            get => _version;
             set
             {
-                version = value;
+                _version = value;
                 RaisePropertyChanged();
             }
         }
-        public string ReleaseDate
+        public string? ReleaseDate
         {
-            get => releaseDate;
+            get => _releaseDate;
             set
             {
-                releaseDate = value;
+                _releaseDate = value;
                 RaisePropertyChanged();
             }
         }
-        public string Name
+        public string? Name
         {
-            get => name;
+            get => _name;
             set
             {
-                name = value;
+                _name = value;
                 RaisePropertyChanged();
             }
         }
-        public string CRC
+        public string? Crc
         {
-            get => cRC;
+            get => _crc;
             set
             {
-                cRC = value;
+                _crc = value;
                 RaisePropertyChanged();
             }
         }
-        public string ProductNumber
+        public string? ProductNumber
         {
-            get => productNumber;
+            get => _productNumber;
             set
             {
-                productNumber = value;
+                _productNumber = value;
                 RaisePropertyChanged();
             }
         }
-        public SpecialDisc SpecialDisc
+        public SpecialDisc? SpecialDisc
         {
-            get => specialDisc;
+            get => _specialDisc;
             set
             {
-                specialDisc = value;
+                _specialDisc = value;
                 RaisePropertyChanged();
             }
         }
 
-        public event PropertyChangedEventHandler PropertyChanged;
+        public event PropertyChangedEventHandler? PropertyChanged;
 
         private void RaisePropertyChanged([CallerMemberName] string propertyName = "")
         {

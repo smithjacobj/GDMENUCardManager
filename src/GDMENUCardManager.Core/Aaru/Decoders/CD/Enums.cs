@@ -30,8 +30,6 @@
 // Copyright © 2011-2021 Natalia Portillo
 // ****************************************************************************/
 
-using System.Diagnostics.CodeAnalysis;
-
 namespace Aaru.Decoders.CD
 {
     //[SuppressMessage("ReSharper", "MemberCanBeInternal")]

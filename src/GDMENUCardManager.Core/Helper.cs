@@ -139,8 +139,6 @@ namespace GDMENUCardManager.Core
             return stringBuilder.ToString().Normalize(NormalizationForm.FormC);
         }
 
-        internal static System.Func<string, bool> CompressedFileExpression;// = new System.Func<string, bool>(x => x.EndsWith(".7z", StringComparison.InvariantCultureIgnoreCase) || x.EndsWith(".rar", StringComparison.InvariantCultureIgnoreCase) || x.EndsWith(".zip", StringComparison.InvariantCultureIgnoreCase));
-
         /// <summary>
         ///     A generic extension method that aids in reflecting 
         ///     and retrieving any attribute that is applied to an `Enum`.

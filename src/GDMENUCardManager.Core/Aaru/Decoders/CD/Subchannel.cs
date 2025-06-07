@@ -26,9 +26,6 @@
 // Copyright © 2011-2021 Natalia Portillo
 // ****************************************************************************/
 
-using System;
-using Aaru.Checksums;
-
 namespace Aaru.Decoders.CD
 {
     public static class Subchannel

@@ -36,13 +36,7 @@
 // Copyright © 2011-2021 Natalia Portillo
 // ****************************************************************************/
 
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Reflection;
 using Aaru.CommonTypes.Interfaces;
-using Aaru.Console;
 
 namespace Aaru.CommonTypes
 {
