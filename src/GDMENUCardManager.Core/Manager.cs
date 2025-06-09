@@ -626,7 +626,7 @@ namespace GDMENUCardManager.Core
                 if (item.Ip == null) throw new InvalidDataException("Item.Ip cannot be null when writing to menu");
                 if (item.Name == null) throw new InvalidDataException("Item.Name cannot be null when writing to menu");
                 if (item.SdNumber <= 0) throw new InvalidDataException("Item.SdNumber must be a valid slot >0");
-                FillListText(sb, item.Ip, item.Name, item.ProductNumber, item.SdNumber);
+                FillListText(sb, item.Ip, item.Name, item.ProductNumber, item.SdNumber, isOpenmenu: true);
             }
 
             return await GenerateMenuImageAsync(tempDirectory.ToString(), sb.ToString());
