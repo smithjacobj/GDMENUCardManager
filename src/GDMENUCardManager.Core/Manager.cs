@@ -450,7 +450,6 @@ namespace GDMENUCardManager.Core
 
                 item = new GdItem
                 {
-                    FullFolderPath = folderPath,
                     FileFormat = FileFormat.Uncompressed,
                     SdNumber = sdNumber,
                     Name = itemName,
@@ -481,6 +480,7 @@ namespace GDMENUCardManager.Core
                 }
 
                 item.ImageFiles.Add(itemImageFile.FileName);
+                item.FullFolderPath = folderPath;
             }
 
             return item;
