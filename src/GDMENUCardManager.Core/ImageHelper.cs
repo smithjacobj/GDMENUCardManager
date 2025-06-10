@@ -14,11 +14,13 @@ namespace GDMENUCardManager.Core
 {
     public static class ImageHelper
     {
-        private static readonly char[] KatanaChar = "SEGA SEGAKATANA SEGA ENTERPRISES".ToCharArray();
+        private static readonly char[] KatanaChar =
+            "SEGA SEGAKATANA SEGA ENTERPRISES".ToCharArray();
 
         public static async Task<GdItem> CreateGdItemAsync(NPath fileOrFolderPath)
         {
-            if (fileOrFolderPath == null) throw new InvalidDataException("fileOrFolderPath is null.");
+            if (fileOrFolderPath == null)
+                throw new InvalidDataException("fileOrFolderPath is null.");
 
             NPath folderPath;
             NPath[] files;
@@ -47,29 +49,34 @@ namespace GDMENUCardManager.Core
             // is uncompressed?
             foreach (var file in files)
             {
-                if (!file.HasExtension(Manager.SupportedImageFormats)) continue;
+                if (!file.HasExtension(Manager.SupportedImageFormats))
+                    continue;
 
                 itemImageFile = file;
                 break;
             }
 
             // is compressed?
-            if (itemImageFile == null && files.Any(x => x.HasExtension(Manager.CompressedFileExtensions)))
+            if (
+                itemImageFile == null
+                && files.Any(x => x.HasExtension(Manager.CompressedFileExtensions))
+            )
             {
-                var compressedFile = files.First(x => x.HasExtension(Manager.CompressedFileExtensions));
+                var compressedFile = files.First(
+                    x => x.HasExtension(Manager.CompressedFileExtensions)
+                );
 
-                var filesInsideArchive =
-                    await Task.Run(() => Helper.DependencyManager.GetArchiveFiles(compressedFile.ToString()));
+                var filesInsideArchive = await Task.Run(
+                    () => Helper.DependencyManager.GetArchiveFiles(compressedFile.ToString())
+                );
 
                 foreach (var file in filesInsideArchive.Keys.Select(x => new NPath(x)))
                 {
-                    if (!file.HasExtension(Manager.SupportedImageFormats)) continue;
+                    if (!file.HasExtension(Manager.SupportedImageFormats))
+                        continue;
                     itemImageFile = file;
                     break;
                 }
-
-                item.CanApplyGdiShrink = filesInsideArchive.Keys.Any(x =>
-                    Path.GetExtension(x).Equals(".gdi", StringComparison.InvariantCultureIgnoreCase));
 
                 if (!await itemImageFile.FileExistsAsync())
                 {
@@ -87,7 +94,9 @@ namespace GDMENUCardManager.Core
                         ProductNumber = String.Empty
                     };
 
-                    item.Length = ByteSizeLib.ByteSize.FromBytes(filesInsideArchive.Sum(x => x.Value));
+                    item.Length = ByteSizeLib.ByteSize.FromBytes(
+                        filesInsideArchive.Sum(x => x.Value)
+                    );
                     item.FileFormat = FileFormat.SevenZip;
                 }
             }
@@ -101,7 +110,9 @@ namespace GDMENUCardManager.Core
                 IFilter? inputFilter = null;
                 try
                 {
-                    inputFilter = await Task.Run(() => filtersList.GetFilter(itemImageFile.ToString()));
+                    inputFilter = await Task.Run(
+                        () => filtersList.GetFilter(itemImageFile.ToString())
+                    );
 
                     // todo check inputFilter null Cannot open specified file.
 
@@ -127,7 +138,6 @@ namespace GDMENUCardManager.Core
                             opticalImage.Close();
                         }
 
-
                         if (useAaru) //try to load file using Aaru
                         {
                             try
@@ -136,27 +146,39 @@ namespace GDMENUCardManager.Core
 
                                 if (itemImageFile.HasExtension("gdi"))
                                 {
-                                    partition = opticalImage.Partitions.Where(x => x.Type != "Audio").Skip(1).First();
+                                    partition = opticalImage.Partitions
+                                        .Where(x => x.Type != "Audio")
+                                        .Skip(1)
+                                        .First();
                                     ip = await GetIpData(opticalImage, partition);
                                 }
                                 else
                                 {
                                     //it's a ps1 disc?
-                                    if (opticalImage.Info.MediaType == MediaType.CDROMXA &&
-                                        opticalImage.Partitions.Any())
+                                    if (
+                                        opticalImage.Info.MediaType == MediaType.CDROMXA
+                                        && opticalImage.Partitions.Any()
+                                    )
                                     {
                                         partition = opticalImage.Partitions.First();
 
-                                        if (ISO9660.GetDecodedPVD(opticalImage, partition, out var pvd) ==
-                                            Aaru.CommonTypes.Structs.Errno.NoError &&
-                                            pvd?.ApplicationIdentifier == "PLAYSTATION" ||
-                                            pvd?.SystemIdentifier == "PLAYSTATION")
+                                        if (
+                                            ISO9660.GetDecodedPVD(
+                                                opticalImage,
+                                                partition,
+                                                out var pvd
+                                            ) == Aaru.CommonTypes.Structs.Errno.NoError
+                                                && pvd?.ApplicationIdentifier == "PLAYSTATION"
+                                            || pvd?.SystemIdentifier == "PLAYSTATION"
+                                        )
                                         {
                                             //it's a ps1 disc!
 
-                                            var systemcnf =
-                                                ImageHelper.ExtractFileFromPartition(opticalImage, partition,
-                                                    "SYSTEM.CNF");
+                                            var systemcnf = ImageHelper.ExtractFileFromPartition(
+                                                opticalImage,
+                                                partition,
+                                                "SYSTEM.CNF"
+                                            );
                                             if (systemcnf == null) //could not open SYSTEM.CNF file
                                                 throw new Exception();
 
@@ -200,11 +222,20 @@ namespace GDMENUCardManager.Core
                                             else
                                             {
                                                 ip.Name = psEntry.name;
-                                                if (DateOnly.TryParse(psEntry.releaseDate,
-                                                        System.Globalization.CultureInfo.InvariantCulture,
+                                                if (
+                                                    DateOnly.TryParse(
+                                                        psEntry.releaseDate,
+                                                        System
+                                                            .Globalization
+                                                            .CultureInfo
+                                                            .InvariantCulture,
                                                         System.Globalization.DateTimeStyles.None,
-                                                        out DateOnly releaseDate))
-                                                    ip.ReleaseDate = releaseDate.ToString("yyyyMMdd");
+                                                        out DateOnly releaseDate
+                                                    )
+                                                )
+                                                    ip.ReleaseDate = releaseDate.ToString(
+                                                        "yyyyMMdd"
+                                                    );
                                                 else
                                                     ip.ReleaseDate = "19990909";
                                             }
@@ -230,17 +261,31 @@ namespace GDMENUCardManager.Core
                                 item.ImageFiles.Add(itemImageFile.FileName);
                                 foreach (var track in opticalImage.Tracks)
                                 {
-                                    if (!string.IsNullOrEmpty(track.TrackFile) && !item.ImageFiles.Any(x =>
-                                            x.ToString().Equals(track.TrackFile,
-                                                StringComparison.InvariantCultureIgnoreCase)))
+                                    if (
+                                        !string.IsNullOrEmpty(track.TrackFile)
+                                        && !item.ImageFiles.Any(
+                                            x =>
+                                                x.ToString()
+                                                    .Equals(
+                                                        track.TrackFile,
+                                                        StringComparison.InvariantCultureIgnoreCase
+                                                    )
+                                        )
+                                    )
                                         item.ImageFiles.Add(track.TrackFile);
-                                    if (!string.IsNullOrEmpty(track.TrackSubchannelFile) && !item.ImageFiles.Any(x =>
-                                            x.ToString().Equals(track.TrackSubchannelFile,
-                                                StringComparison.InvariantCultureIgnoreCase)))
+                                    if (
+                                        !string.IsNullOrEmpty(track.TrackSubchannelFile)
+                                        && !item.ImageFiles.Any(
+                                            x =>
+                                                x.ToString()
+                                                    .Equals(
+                                                        track.TrackSubchannelFile,
+                                                        StringComparison.InvariantCultureIgnoreCase
+                                                    )
+                                        )
+                                    )
                                         item.ImageFiles.Add(track.TrackSubchannelFile);
                                 }
-
-                                item.CanApplyGdiShrink = itemImageFile.HasExtension("gdi");
 
                                 Manager.UpdateItemLength(item);
                             }
@@ -253,7 +298,6 @@ namespace GDMENUCardManager.Core
                                 opticalImage.Close();
                             }
                         }
-
 
                         if (!useAaru) //if cant open using Aaru, try to parse file manually
                         {
@@ -300,8 +344,10 @@ namespace GDMENUCardManager.Core
             item.Name = item.Name?.Trim();
             item.ProductNumber = item.ProductNumber?.Trim();
 
-            if (item.FullFolderPath.IsChildOf(Manager.SdPath) &&
-                int.TryParse(Path.GetFileName(itemImageFile.Parent.ToString()), out var number))
+            if (
+                item.FullFolderPath.IsChildOf(Manager.SdPath)
+                && int.TryParse(Path.GetFileName(itemImageFile.Parent.ToString()), out var number)
+            )
                 item.SdNumber = number;
 
             return item;
@@ -328,8 +374,12 @@ namespace GDMENUCardManager.Core
             if (ipbin.disc_no == 32 || ipbin.disc_total_nos == 32)
             {
                 disc = "1/1";
-                if (GetString(ipbin.dreamcast_media) == "FCD" && releaseDate == "20000627" && version == "V1.000" &&
-                    GetString(ipbin.boot_filename) == "PELICAN.BIN")
+                if (
+                    GetString(ipbin.dreamcast_media) == "FCD"
+                    && releaseDate == "20000627"
+                    && version == "V1.000"
+                    && GetString(ipbin.boot_filename) == "PELICAN.BIN"
+                )
                     special = SpecialDisc.CodeBreaker;
             }
             else
@@ -366,7 +416,6 @@ namespace GDMENUCardManager.Core
             return str;
         }
 
-
         //returns null if file not exists on image. throw on any error
         public static async Task<byte[]?> GetGdText(string itemImageFile)
         {
@@ -397,12 +446,18 @@ namespace GDMENUCardManager.Core
 
                     Partition partition;
                     string filename = "0GDTEX.PVR";
-                    if (Path.GetExtension(itemImageFile)
-                        .Equals(".gdi",
-                            StringComparison.InvariantCultureIgnoreCase)) //first track not audio and skip one
+                    if (
+                        Path.GetExtension(itemImageFile)
+                            .Equals(".gdi", StringComparison.InvariantCultureIgnoreCase)
+                    ) //first track not audio and skip one
                     {
-                        partition = opticalImage.Partitions.Where(x => x.Type != "Audio").Skip(1).First();
-                        return await Task.Run(() => ExtractFileFromPartition(opticalImage, partition, filename));
+                        partition = opticalImage.Partitions
+                            .Where(x => x.Type != "Audio")
+                            .Skip(1)
+                            .First();
+                        return await Task.Run(
+                            () => ExtractFileFromPartition(opticalImage, partition, filename)
+                        );
                     }
                     else //try to find from last
                     {
@@ -410,8 +465,10 @@ namespace GDMENUCardManager.Core
                         {
                             partition = opticalImage.Partitions[i];
                             if ((await GetIpData(opticalImage, partition)) != null)
-                                return await Task.Run(() =>
-                                    ExtractFileFromPartition(opticalImage, partition, filename));
+                                return await Task.Run(
+                                    () =>
+                                        ExtractFileFromPartition(opticalImage, partition, filename)
+                                );
                         }
                     }
 
@@ -429,8 +486,11 @@ namespace GDMENUCardManager.Core
             }
         }
 
-        private static byte[]? ExtractFileFromPartition(IOpticalMediaImage opticalImage, Partition partition,
-            string fileName)
+        private static byte[]? ExtractFileFromPartition(
+            IOpticalMediaImage opticalImage,
+            Partition partition,
+            string fileName
+        )
         {
             var iso = new ISO9660();
             try
@@ -443,7 +503,10 @@ namespace GDMENUCardManager.Core
                 //System.Collections.Generic.List<string> strlist = null;
                 //iso.ReadDir("/", out strlist);
 
-                if (iso.Stat(fileName, out var stat) == Aaru.CommonTypes.Structs.Errno.NoError && stat.Length > 0)
+                if (
+                    iso.Stat(fileName, out var stat) == Aaru.CommonTypes.Structs.Errno.NoError
+                    && stat.Length > 0
+                )
                 {
                     //file exists
                     var buff = new byte[stat.Length];
@@ -458,7 +521,6 @@ namespace GDMENUCardManager.Core
 
             return null;
         }
-
 
         #region fallback methods if cant parse using Aaru
 
@@ -485,10 +547,16 @@ namespace GDMENUCardManager.Core
 
                 var gdi = await GetGdiFileListAsync(filePath.ToString());
 
-                foreach (var datafile in gdi
-                             .Where(x => !x.EndsWith(".raw", StringComparison.InvariantCultureIgnoreCase)).Skip(1))
+                foreach (
+                    var datafile in gdi.Where(
+                            x => !x.EndsWith(".raw", StringComparison.InvariantCultureIgnoreCase)
+                        )
+                        .Skip(1)
+                )
                 {
-                    ip = await Task.Run(() => GetIpData(item.FullFolderPath.Combine(datafile).ToString()));
+                    ip = await Task.Run(
+                        () => GetIpData(item.FullFolderPath.Combine(datafile).ToString())
+                    );
                     if (ip != null)
                         break;
                 }
@@ -538,7 +606,6 @@ namespace GDMENUCardManager.Core
             if (ip == null)
                 throw new Exception($"Can't read data from file {itemImageFile}");
 
-
             item.Ip = ip;
             item.Name = ip.Name;
             item.ProductNumber = ip.ProductNumber;
@@ -554,8 +621,13 @@ namespace GDMENUCardManager.Core
             item.Name = item.Name?.Trim();
             item.ProductNumber = item.ProductNumber?.Trim();
 
-            if (item.FullFolderPath.IsChildOf(Manager.SdPath) &&
-                int.TryParse(new DirectoryInfo(item.FullFolderPath.ToString()).Name, out var number))
+            if (
+                item.FullFolderPath.IsChildOf(Manager.SdPath)
+                && int.TryParse(
+                    new DirectoryInfo(item.FullFolderPath.ToString()).Name,
+                    out var number
+                )
+            )
                 item.SdNumber = number;
 
             Manager.UpdateItemLength(item);
@@ -563,7 +635,7 @@ namespace GDMENUCardManager.Core
             return item;
         }
 
-        private static async Task<string[]> GetGdiFileListAsync(string gdiFilePath)
+        internal static async Task<string[]> GetGdiFileListAsync(string gdiFilePath)
         {
             var tracks = new List<string>();
 
@@ -609,7 +681,7 @@ namespace GDMENUCardManager.Core
                 //check if data in array matches
                 if ((char)c == search[position])
                 {
-                    //if charater matches first character of 
+                    //if charater matches first character of
                     //seek string, store it for later
                     if (stored == -1 && position > 0 && (char)c == search[0])
                     {

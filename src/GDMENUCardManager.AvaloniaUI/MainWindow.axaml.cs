@@ -131,7 +131,10 @@ namespace GDMENUCardManager.AvaloniaUI
                 }
             };
 
-            this.Opened += (ss, ee) => { FillDriveList(); };
+            this.Opened += (ss, ee) =>
+            {
+                FillDriveList();
+            };
 
             this.Closing += MainWindow_Closing;
             this.PropertyChanged += MainWindow_PropertyChanged;
@@ -308,9 +311,7 @@ namespace GDMENUCardManager.AvaloniaUI
                             )
                             .ShowWindowDialogAsync(this);
                 }
-                catch (Exception)
-                {
-                }
+                catch (Exception) { }
                 finally
                 {
                     IsBusy = false;
@@ -360,11 +361,13 @@ namespace GDMENUCardManager.AvaloniaUI
 
         private void ButtonExplorer_Click(object sender, RoutedEventArgs e)
         {
-            Process.Start(new ProcessStartInfo
-            {
-                UseShellExecute = true,
-                FileName = TempFolder.Combine("GDMenuCardManager").ToString(SlashMode.Native)
-            });
+            Process.Start(
+                new ProcessStartInfo
+                {
+                    UseShellExecute = true,
+                    FileName = TempFolder.Combine("GDMenuCardManager").ToString(SlashMode.Native)
+                }
+            );
         }
 
         private async void ButtonInfo_Click(object sender, RoutedEventArgs e)
@@ -464,9 +467,7 @@ namespace GDMENUCardManager.AvaloniaUI
             {
                 await Manager.LoadIpAll();
             }
-            catch (ProgressWindowClosedException)
-            {
-            }
+            catch (ProgressWindowClosedException) { }
             catch (Exception ex)
             {
                 await MessageBoxManager
@@ -494,65 +495,68 @@ namespace GDMENUCardManager.AvaloniaUI
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 list = DriveInfo
                     .GetDrives()
-                    .Where(x =>
-                        x.IsReady
-                        && (
-                            _showAllDrives
-                            || (
-                                x.DriveType == DriveType.Removable
-                                && x.DriveFormat.StartsWith("FAT")
+                    .Where(
+                        x =>
+                            x.IsReady
+                            && (
+                                _showAllDrives
+                                || (
+                                    x.DriveType == DriveType.Removable
+                                    && x.DriveFormat.StartsWith("FAT")
+                                )
                             )
-                        )
                     )
                     .ToArray();
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
                 //list = DriveInfo.GetDrives().Where(x => x.IsReady && (showAllDrives || x.DriveType == DriveType.Removable || x.DriveType == DriveType.Fixed)).ToArray();//todo need to test
                 list = DriveInfo
                     .GetDrives()
-                    .Where(x =>
-                        x.IsReady
-                        && (
-                            _showAllDrives
-                            || x.DriveType == DriveType.Removable
-                            || x.DriveType == DriveType.Fixed
-                            || (
-                                x.DriveType == DriveType.Unknown
-                                && x.DriveFormat.Equals(
-                                    "lifs",
-                                    StringComparison.InvariantCultureIgnoreCase
+                    .Where(
+                        x =>
+                            x.IsReady
+                            && (
+                                _showAllDrives
+                                || x.DriveType == DriveType.Removable
+                                || x.DriveType == DriveType.Fixed
+                                || (
+                                    x.DriveType == DriveType.Unknown
+                                    && x.DriveFormat.Equals(
+                                        "lifs",
+                                        StringComparison.InvariantCultureIgnoreCase
+                                    )
                                 )
                             )
-                        )
                     )
                     .ToArray(); //todo need to test
             else //linux
                 list = DriveInfo
                     .GetDrives()
-                    .Where(x =>
-                        x.IsReady
-                        && (
-                            _showAllDrives
-                            || (
-                                (
-                                    x.DriveType == DriveType.Removable
-                                    || x.DriveType == DriveType.Fixed
-                                )
-                                && x.DriveFormat.Equals(
-                                    "msdos",
-                                    StringComparison.InvariantCultureIgnoreCase
-                                )
-                                && (
-                                    x.Name.StartsWith(
-                                        "/media/",
+                    .Where(
+                        x =>
+                            x.IsReady
+                            && (
+                                _showAllDrives
+                                || (
+                                    (
+                                        x.DriveType == DriveType.Removable
+                                        || x.DriveType == DriveType.Fixed
+                                    )
+                                    && x.DriveFormat.Equals(
+                                        "msdos",
                                         StringComparison.InvariantCultureIgnoreCase
                                     )
-                                    || x.Name.StartsWith(
-                                        "/run/media/",
-                                        StringComparison.InvariantCultureIgnoreCase
+                                    && (
+                                        x.Name.StartsWith(
+                                            "/media/",
+                                            StringComparison.InvariantCultureIgnoreCase
+                                        )
+                                        || x.Name.StartsWith(
+                                            "/run/media/",
+                                            StringComparison.InvariantCultureIgnoreCase
+                                        )
                                     )
                                 )
                             )
-                        )
                     )
                     .ToArray();
 
@@ -579,9 +583,7 @@ namespace GDMENUCardManager.AvaloniaUI
                     )
                         SelectedDrive = drive;
                 }
-                catch
-                {
-                }
+                catch { }
             }
 
             //look for 01 folder
@@ -597,9 +599,7 @@ namespace GDMENUCardManager.AvaloniaUI
                             break;
                         }
                     }
-                    catch
-                    {
-                    }
+                    catch { }
                 }
             }
 
@@ -621,9 +621,7 @@ namespace GDMENUCardManager.AvaloniaUI
                             break;
                         }
                     }
-                    catch
-                    {
-                    }
+                    catch { }
                 }
             }
 
@@ -639,24 +637,22 @@ namespace GDMENUCardManager.AvaloniaUI
             var menuitem = (MenuItem)sender;
             var item = (GdItem)menuitem.CommandParameter;
 
-            var msBox = MessageBoxManager.GetMessageBoxCustom(new MsBox.Avalonia.Dto.MessageBoxCustomParams
-            {
-                ContentTitle = "Rename",
-                ContentHeader = "inform new name",
-                ContentMessage = "Name",
-                InputParams =
+            var msBox = MessageBoxManager.GetMessageBoxCustom(
+                new MsBox.Avalonia.Dto.MessageBoxCustomParams
                 {
-                    DefaultValue = item.Name,
-                    Multiline = false
-                },
-                ShowInCenter = true,
-                WindowStartupLocation = WindowStartupLocation.CenterOwner,
-                ButtonDefinitions = new ButtonDefinition[]
-                {
-                    new ButtonDefinition { Name = "Ok" },
-                    new ButtonDefinition { Name = "Cancel" }
+                    ContentTitle = "Rename",
+                    ContentHeader = "inform new name",
+                    ContentMessage = "Name",
+                    InputParams = { DefaultValue = item.Name, Multiline = false },
+                    ShowInCenter = true,
+                    WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                    ButtonDefinitions = new ButtonDefinition[]
+                    {
+                        new ButtonDefinition { Name = "Ok" },
+                        new ButtonDefinition { Name = "Cancel" }
+                    }
                 }
-            });
+            );
             var result = await msBox.ShowWindowDialogAsync(this);
 
             if (result == "Ok" && !string.IsNullOrWhiteSpace(msBox.InputValue))
@@ -772,8 +768,7 @@ namespace GDMENUCardManager.AvaloniaUI
                             IsBusy = false;
                         }
 
-                        if (item.Ip.Name != "GDMENU" &&
-                            item.Ip.Name != "openMenu") //dont let the user exclude GDMENU, openMenu
+                        if (item.Ip.Name != "GDMENU" && item.Ip.Name != "openMenu") //dont let the user exclude GDMENU, openMenu
                             toRemove.Add(item);
                     }
                     else
@@ -882,9 +877,7 @@ namespace GDMENUCardManager.AvaloniaUI
                 await Manager.LoadIpAll();
                 IsBusy = false;
             }
-            catch (ProgressWindowClosedException)
-            {
-            }
+            catch (ProgressWindowClosedException) { }
 
             if (dg1.SelectedIndex == -1 || !searchInGrid(dg1.SelectedIndex))
                 searchInGrid(0);
@@ -938,19 +931,27 @@ namespace GDMENUCardManager.AvaloniaUI
                 return;
 
             var exportFileManager = new ExportFileManager(file);
-            var exportFile = await exportFileManager.ReadItems();
+            var importFile = await exportFileManager.ReadItems();
+
+            if (importFile == null)
+                return;
 
             // add everything except menu items by union to our list.
             var comparer = new GdItem.ImportComparer();
-            var newItems = exportFile
-                .ItemList
-                .Where(x =>
-                    !Manager.ItemList.Any(y =>
-                        comparer.GetHashCode(x) == comparer.GetHashCode(y)
-                        && comparer.Equals(x, y)
+            var newItems = importFile.ItemList.Where(
+                x =>
+                    !Manager.ItemList.Any(
+                        y =>
+                            comparer.GetHashCode(x) == comparer.GetHashCode(y)
+                            && comparer.Equals(x, y)
                     )
-                );
-            Manager.ItemList.AddRange(newItems);
+            );
+            await Manager.AddGames(
+                newItems
+                    .Where(x => x.SourcePath != null)
+                    .Select(x => x.SourcePath.ToString())
+                    .ToArray()
+            );
         }
 
         private async void ButtonErrorReport_Click(object sender, RoutedEventArgs eventArgs)
@@ -964,7 +965,8 @@ namespace GDMENUCardManager.AvaloniaUI
             };
 
             var file = await saveDialog.ShowAsync(this);
-            if (file == null) return;
+            if (file == null)
+                return;
 
             await using var writer = File.Create(file);
             var sb = new StringBuilder();
@@ -978,8 +980,6 @@ namespace GDMENUCardManager.AvaloniaUI
             }
         }
 
-        private async void ButtonRemoveErrors_Click(object sender, RoutedEventArgs eventArgs)
-        {
-        }
+        private async void ButtonRemoveErrors_Click(object sender, RoutedEventArgs eventArgs) { }
     }
 }
