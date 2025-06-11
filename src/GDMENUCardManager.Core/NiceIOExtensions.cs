@@ -25,6 +25,21 @@ public static class NiceIOExtensions
         return Task.Run(() => from.Move(to));
     }
 
+    public static Task<bool> TryMoveDirectoryAsync(this NPath from, NPath to)
+    {
+        return Task.Run(() =>
+        {
+            try
+            {
+                from.Move(to);
+                return true;
+            }
+            catch (ArgumentException) { }
+
+            return false;
+        });
+    }
+
     public static Task CreateDirectoryAsync(this NPath path)
     {
         return Task.Run(() => path.CreateDirectory());
@@ -70,6 +85,11 @@ public static class NiceIOExtensions
         return Task.Run(() => path.ReadAllText());
     }
 
+    public static Task<string[]> ReadAllLinesAsync(this NPath path)
+    {
+        return Task.Run(() => path.ReadAllLines());
+    }
+
     public static Task CopyDirectoryAsync(this NPath from, NPath to)
     {
         return Task.Run(() => from.Copy(to));
@@ -89,7 +109,9 @@ public static class NiceIOExtensions
 
     public static NPath? FilterErrorFile(this NPath[] files)
     {
-        return files.FirstOrDefault(x => x.FileName.Equals(Constants.ErrorTextFile, StringComparison.OrdinalIgnoreCase));
+        return files.FirstOrDefault(
+            x => x.FileName.Equals(Constants.ErrorTextFile, StringComparison.OrdinalIgnoreCase)
+        );
     }
 
     public static async Task WriteErrorFileAsync(this NPath folderPath, string errorText)

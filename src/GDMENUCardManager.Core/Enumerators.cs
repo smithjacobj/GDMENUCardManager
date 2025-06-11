@@ -2,11 +2,14 @@
 
 namespace GDMENUCardManager.Core
 {
-    public enum WorkMode
+    public enum ShrinkState
     {
-        None,
-        New,
-        Move
+        Unknown,
+        IsGdi,
+        NotGdi,
+        IsGdiAndShrunk,
+        IsGdiAndFailed,
+        Blacklisted
     }
 
     public enum FileFormat

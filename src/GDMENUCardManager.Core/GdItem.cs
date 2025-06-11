@@ -41,18 +41,20 @@ namespace GDMENUCardManager.Core
         /// </summary>
         private string? _guid;
 
+        [JsonIgnore]
         public string Guid
         {
             get
             {
-                if (!string.IsNullOrEmpty(_guid)) return _guid;
+                if (!string.IsNullOrEmpty(_guid))
+                    return _guid;
 
                 _guid = System.Guid.NewGuid().ToString();
                 OnPropertyChanged();
 
                 return _guid;
             }
-            init
+            set
             {
                 _guid = value;
                 OnPropertyChanged();
@@ -122,26 +124,29 @@ namespace GDMENUCardManager.Core
         /// The main image file for the game entry
         /// </summary>
         [JsonIgnore]
-        public NPath? ImageFile => ImageFiles.FirstOrDefault();
+        public NPath? ImageFile => _imageFiles.FirstOrDefault();
+
+        private readonly List<NPath> _imageFiles = new();
 
         /// <summary>
         /// The full list of image files in the entry
         /// </summary>
-        [JsonConverter(typeof(NPathEnumerableConverter))]
-        public readonly List<NPath> ImageFiles = new();
+        [JsonConverter(typeof(NPathListConverter))]
+        public List<NPath> ImageFiles => _imageFiles;
+
+        internal bool IsGdi => ImageFile?.HasExtension("gdi") ?? false;
 
         /// <summary>
         /// The folder that contains the entry, whether on the SD card or elsewhere.
         /// </summary>
         private NPath? _fullFolderPath;
 
-        [JsonConverter(typeof(NPathConverter))]
+        [JsonIgnore] // we ignore it because this is where it's located, duplicating state is dumb
         public NPath FullFolderPath
         {
             get
             {
-                if (_fullFolderPath == null)
-                    throw new InvalidDataException("Attempt to access uninitialized FullFolderPath");
+                if (_fullFolderPath == null) throw new InvalidDataException("FullFolderPath accessed while null");
                 return _fullFolderPath;
             }
             set
@@ -205,26 +210,11 @@ namespace GDMENUCardManager.Core
         }
 
         /// <summary>
-        /// Current action that is being taken on this entry
-        /// </summary>
-        private WorkMode _work;
-
-        [JsonIgnore]
-        public WorkMode Work
-        {
-            get => _work;
-            set
-            {
-                _work = value;
-                OnPropertyChanged();
-            }
-        }
-
-        /// <summary>
         /// The location as enumerated in LocationEnum that the files for the entry are in.
         /// </summary>
         private LocationEnum _location = LocationEnum.Unset;
 
+        [JsonIgnore]
         public LocationEnum Location
         {
             get => HasError ? LocationEnum.Error : _location;
@@ -236,9 +226,9 @@ namespace GDMENUCardManager.Core
         }
 
         /// <summary>
-        /// Whether or not the game can be shrunk by GDIShrink.
+        /// True if the game has already been shrunk by GDIShrink
         /// </summary>
-        public bool CanApplyGdiShrink { get; set; }
+        public bool IsShrunk { get; set; }
 
         /// <summary>
         /// The condition/format the file is stored in.
@@ -277,15 +267,19 @@ namespace GDMENUCardManager.Core
         public bool ImportComparator(GdItem other)
         {
             return FullFolderPath == other.FullFolderPath
-                   && new HashSet<NPath>(ImageFiles).SetEquals(other.ImageFiles);
+                   && new HashSet<NPath>(_imageFiles).SetEquals(other._imageFiles);
         }
 
         public class ImportComparer : IEqualityComparer<GdItem>
         {
             public bool Equals(GdItem? x, GdItem? y)
             {
-                var xDisc = string.IsNullOrEmpty(x?.Ip?.Disc) ? Constants.k_UnknownDiscNumber : x.Ip?.Disc;
-                var yDisc = string.IsNullOrEmpty(y?.Ip?.Disc) ? Constants.k_UnknownDiscNumber : y.Ip?.Disc;
+                var xDisc = string.IsNullOrEmpty(x?.Ip?.Disc)
+                    ? Constants.k_UnknownDiscNumber
+                    : x.Ip?.Disc;
+                var yDisc = string.IsNullOrEmpty(y?.Ip?.Disc)
+                    ? Constants.k_UnknownDiscNumber
+                    : y.Ip?.Disc;
                 return !string.IsNullOrEmpty(x?.ProductNumber)
                        && !string.IsNullOrEmpty(y?.ProductNumber)
                        && x.ProductNumber == y.ProductNumber
@@ -304,37 +298,58 @@ namespace GDMENUCardManager.Core
 
         internal class NPathConverter : JsonConverter<NPath>
         {
-            public override NPath? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+            public override NPath? Read(
+                ref Utf8JsonReader reader,
+                Type typeToConvert,
+                JsonSerializerOptions options
+            )
             {
                 var strPath = reader.GetString();
                 return string.IsNullOrEmpty(strPath) ? null : new NPath(strPath);
             }
 
-            public override void Write(Utf8JsonWriter writer, NPath value, JsonSerializerOptions options)
+            public override void Write(
+                Utf8JsonWriter writer,
+                NPath value,
+                JsonSerializerOptions options
+            )
             {
                 writer.WriteStringValue(value.ToString());
             }
         }
 
-        internal class NPathEnumerableConverter : JsonConverter<IEnumerable<NPath>>
+        internal class NPathListConverter : JsonConverter<List<NPath>>
         {
-            public override IEnumerable<NPath>? Read(ref Utf8JsonReader reader, Type typeToConvert,
-                JsonSerializerOptions options)
+            public override List<NPath>? Read(
+                ref Utf8JsonReader reader,
+                Type typeToConvert,
+                JsonSerializerOptions options
+            )
             {
                 var jsonNode = JsonNode.Parse(ref reader);
-                if (jsonNode == null) return null;
+                if (jsonNode == null)
+                    return null;
 
                 var paths = new List<NPath>();
-                return jsonNode.AsArray().Where(x => x != null).Select(x => new NPath(x!.GetValue<string>()));
+                return jsonNode
+                    .AsArray()
+                    .Where(x => x != null)
+                    .Select(x => new NPath(x!.GetValue<string>()))
+                    .ToList();
             }
 
-            public override void Write(Utf8JsonWriter writer, IEnumerable<NPath> value, JsonSerializerOptions options)
+            public override void Write(
+                Utf8JsonWriter writer,
+                List<NPath> value,
+                JsonSerializerOptions options
+            )
             {
                 var jsonArray = new JsonArray();
                 foreach (var path in value)
                 {
                     jsonArray.Add(path.ToString());
                 }
+
                 jsonArray.WriteTo(writer);
             }
         }
@@ -348,7 +363,8 @@ namespace GDMENUCardManager.Core
             )
             {
                 var jsonNode = JsonNode.Parse(ref reader);
-                if (jsonNode == null) return ByteSize.FromBytes(0);
+                if (jsonNode == null)
+                    return ByteSize.FromBytes(0);
 
                 var bytes = jsonNode["Bytes"]?.GetValue<double>() ?? 0;
                 return ByteSize.FromBytes(bytes);
@@ -360,10 +376,7 @@ namespace GDMENUCardManager.Core
                 JsonSerializerOptions options
             )
             {
-                var jsonObject = new JsonObject
-                {
-                    ["Bytes"] = value.Bytes
-                };
+                var jsonObject = new JsonObject { ["Bytes"] = value.Bytes };
                 jsonObject.WriteTo(writer);
             }
         }
@@ -385,7 +398,7 @@ namespace GDMENUCardManager.Core
         public void UpdateLength()
         {
             Length = ByteSize.FromBytes(
-                ImageFiles.Sum(x => new FileInfo(FullFolderPath.Combine(x).ToString()).Length)
+                _imageFiles.Sum(x => new FileInfo(FullFolderPath.Combine(x).ToString()).Length)
             );
         }
     }

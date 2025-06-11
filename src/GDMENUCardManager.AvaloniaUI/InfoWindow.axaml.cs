@@ -1,4 +1,5 @@
-﻿using Avalonia;
+﻿#nullable enable
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
 using System;
@@ -16,8 +17,8 @@ namespace GDMENUCardManager
         public string FileInfo { get; }
         public string IpInfo { get; }
 
-        private string _LabelText = "Loading...";
-        public string LabelText
+        private string? _LabelText = "Loading...";
+        public string? LabelText
         {
             get { return _LabelText; }
             private set
@@ -27,8 +28,8 @@ namespace GDMENUCardManager
             }
         }
 
-        private Avalonia.Media.Imaging.Bitmap _GdTexture = null;
-        public Avalonia.Media.Imaging.Bitmap GdTexture
+        private Avalonia.Media.Imaging.Bitmap? _GdTexture = null;
+        public Avalonia.Media.Imaging.Bitmap? GdTexture
         {
             get { return _GdTexture; }
             private set
@@ -39,7 +40,7 @@ namespace GDMENUCardManager
         }
 
         private GdItem item;
-        public new event PropertyChangedEventHandler PropertyChanged;
+        public new event PropertyChangedEventHandler? PropertyChanged;
 
         public InfoWindow(GdItem item)
         {
@@ -53,7 +54,7 @@ namespace GDMENUCardManager
 
             this.item = item;
 
-            string vga = item.Ip.Vga ? "   VGA" : null;
+            string vga = item.Ip?.Vga ?? false ? "   VGA" : string.Empty;
 
             StringBuilder sb = new StringBuilder();
             if (item.HasError)
@@ -64,10 +65,10 @@ namespace GDMENUCardManager
             else
             {
                 sb.AppendLine("Folder:");
-                sb.AppendLine(item.FullFolderPath.FileName);
+                sb.AppendLine(item.FullFolderPath?.FileName ?? item.SourcePath?.Parent.ToString() ?? "[Unknown]");
                 sb.AppendLine();
                 sb.AppendLine("File:");
-                sb.AppendLine(item.ImageFile?.FileName ?? "[Unknown]");
+                sb.AppendLine(item.ImageFile?.FileName ?? item.SourcePath?.FileName ?? "[Unknown]");
             }
 
             FileInfo = sb.ToString();
@@ -79,15 +80,15 @@ namespace GDMENUCardManager
             else if (item.FileFormat == FileFormat.Uncompressed)
             {
                 sb.Clear();
-                sb.AppendLine(item.Ip.Name);
+                sb.AppendLine(item.Ip?.Name ?? "[Unknown]");
                 sb.AppendLine();
-                sb.AppendLine($"{item.Ip.Version}   DISC {item.Ip.Disc}{vga}");
-                sb.AppendLine($"CRC: {item.Ip.Crc}   Product: {item.Ip.ProductNumber}");
+                sb.AppendLine($"{item.Ip?.Version}   DISC {item.Ip?.Disc ?? "?/?"}{vga}");
+                sb.AppendLine($"CRC: {item.Ip?.Crc}   Product: {item.Ip?.ProductNumber}");
 
-                if (item.Ip.SpecialDisc != SpecialDisc.None)
+                if ((item.Ip?.SpecialDisc ?? SpecialDisc.None) != SpecialDisc.None)
                 {
                     sb.AppendLine();
-                    sb.AppendLine("Detected as: " + item.Ip.SpecialDisc);
+                    sb.AppendLine("Detected as: " + item.Ip!.SpecialDisc);
                 }
                 IpInfo = sb.ToString();
             }
@@ -124,45 +125,46 @@ namespace GDMENUCardManager
                 if (item.FileFormat == FileFormat.SevenZip)
                     throw new Exception("Can't load from compressed files.");
 
-                var filePath = item.FullFolderPath.Combine(item.ImageFile);
-
-                var gdtexture = await Task.Run(() => ImageHelper.GetGdText(filePath.ToString()));
+                var filePath = item.FullFolderPath?.Combine(item.ImageFile);
+                byte[]? gdtexture = null;
+                if (filePath != null)
+                {
+                    gdtexture = await Task.Run(() => ImageHelper.GetGdText(filePath.ToString()));
+                }
 
                 if (gdtexture == null)
                 {
                     throw new Exception("File not found");
                 }
-                else
+
+                var decoded = await Task.Run(
+                    () => new PuyoTools.PvrTexture().GetDecoded(gdtexture)
+                );
+
+                using (var memory = new MemoryStream())
                 {
-                    var decoded = await Task.Run(
-                        () => new PuyoTools.PvrTexture().GetDecoded(gdtexture)
-                    );
-
-                    using (var memory = new MemoryStream())
-                    {
-                        byte[] data = decoded.Item1;
-                        using (
-                            var writeableBitmap = new Avalonia.Media.Imaging.WriteableBitmap(
-                                new PixelSize(decoded.Item2, decoded.Item3),
-                                new Vector(96, 96),
-                                Avalonia.Platform.PixelFormat.Bgra8888,
-                                Avalonia.Platform.AlphaFormat.Unpremul
-                            )
+                    byte[] data = decoded.Item1;
+                    using (
+                        var writeableBitmap = new Avalonia.Media.Imaging.WriteableBitmap(
+                            new PixelSize(decoded.Item2, decoded.Item3),
+                            new Vector(96, 96),
+                            Avalonia.Platform.PixelFormat.Bgra8888,
+                            Avalonia.Platform.AlphaFormat.Unpremul
                         )
-                        {
-                            using (var l = writeableBitmap.Lock())
-                                System.Runtime.InteropServices.Marshal.Copy(
-                                    data,
-                                    0,
-                                    l.Address,
-                                    data.Length
-                                );
+                    )
+                    {
+                        using (var l = writeableBitmap.Lock())
+                            System.Runtime.InteropServices.Marshal.Copy(
+                                data,
+                                0,
+                                l.Address,
+                                data.Length
+                            );
 
-                            writeableBitmap.Save(memory);
-                            memory.Position = 0;
-                            GdTexture = new Avalonia.Media.Imaging.Bitmap(memory);
-                            LabelText = null;
-                        }
+                        writeableBitmap.Save(memory);
+                        memory.Position = 0;
+                        GdTexture = new Avalonia.Media.Imaging.Bitmap(memory);
+                        LabelText = null;
                     }
                 }
             }
